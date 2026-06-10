@@ -1,0 +1,33 @@
+# docker-compose.yml — локальна інфраструктура для Q&A RAG API.
+# Піднімає дві БД у контейнерах однією командою `docker compose up -d`,
+# щоб не ставити Qdrant і Redis на машину вручну.
+
+services:
+  # --- Qdrant: векторна БД ---------------------------------------------------
+  # Зберігає embeddings: чанки документа (для пошуку) і питання (для semantic cache).
+  qdrant:
+    image: qdrant/qdrant:latest      # готовий офіційний образ, нічого не компілюємо
+    container_name: qa_qdrant        # фіксоване ім'я — зручно для `docker exec`/логів
+    ports:
+      - "6333:6333"   # REST API + веб-дашборд (http://localhost:6333/dashboard)
+      - "6334:6334"   # gRPC (швидший протокол; qdrant-client може ним користуватись)
+    volumes:
+      - qdrant_data:/qdrant/storage  # дані живуть у volume, а не всередині контейнера
+
+  # --- Redis: швидкі лічильники в пам'яті ------------------------------------
+  # Потрібен для token-bucket rate-limit і метрик. НЕ для векторів.
+  redis:
+    image: redis:7-alpine            # alpine = мінімальний образ (~40MB)
+    container_name: qa_redis
+    ports:
+      - "6379:6379"                  # стандартний порт Redis
+    volumes:
+      - redis_data:/data             # персистимо лічильники між перезапусками
+
+# --- Named volumes -----------------------------------------------------------
+# Окреме сховище Docker, що ПЕРЕЖИВАЄ перестворення контейнера.
+# Без цього `docker compose down` стирав би проіндексовані вектори — і довелось би
+# щоразу переіндексовувати документ заново.
+volumes:
+  qdrant_data:
+  redis_data:

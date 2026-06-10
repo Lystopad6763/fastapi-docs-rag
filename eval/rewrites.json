@@ -1,0 +1,22 @@
+[
+  "`disable swagger ui in fastapi`",
+  "`Annotated[type, str]` in FastAPI function return types",
+  "`FastAPI base model inheritance`",
+  "`type hinting commons parameter FastAPI editors`",
+  "`nested models in FastAPI`",
+  "sse_items_no_async return type",
+  "FastAPI advanced middleware documentation location",
+  "`CORSMiddleware` purpose in handling CORS preflight requests",
+  "`FastAPI path parameters advantages`",
+  "`last_query: typing.Any` parameter type FastAPI documentation",
+  "`fastapi get random item from dictionary without id`",
+  "fastapi.exceptions.HTTPException",
+  "`path operation decorator dependencies no return value`",
+  "`path operation function multiple body parameters`",
+  "`FastAPI Body() multiple examples`",
+  "`fastapi status codes convenience variables`",
+  "`fastapi uvicorn run`",
+  "Running examples in FastAPI tutorial",
+  "`upload file form data FastAPI`",
+  "`add_task method arguments FastAPI task queue`"
+]

@@ -1,0 +1,272 @@
+[
+  {
+    "query": "How can I disable the ReDoc documentation interface in a FastAPI application?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__metadata#230",
+    "gold_source": "tutorial__metadata"
+  },
+  {
+    "query": "FastAPI docs URL configuration",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__metadata#230",
+    "gold_source": "tutorial__metadata"
+  },
+  {
+    "query": "docs_url, redoc_url",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__metadata#230",
+    "gold_source": "tutorial__metadata"
+  },
+  {
+    "query": "What is the purpose of the `Annotated` decorator in this example?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__header-params#210",
+    "gold_source": "tutorial__header-params"
+  },
+  {
+    "query": "python fastapi header parameter",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__header-params#210",
+    "gold_source": "tutorial__header-params"
+  },
+  {
+    "query": "Header, Annotated, FastAPI",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__header-params#210",
+    "gold_source": "tutorial__header-params"
+  },
+  {
+    "query": "How can I reduce code duplication in my FastAPI models by using inheritance and a base model?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__extra-models#157",
+    "gold_source": "tutorial__extra-models"
+  },
+  {
+    "query": "fastapi reduce code duplication",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__extra-models#157",
+    "gold_source": "tutorial__extra-models"
+  },
+  {
+    "query": "UserBase, UserIn, UserOut, UserInDB",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__extra-models#157",
+    "gold_source": "tutorial__extra-models"
+  },
+  {
+    "query": "Can I use a custom class as a dependency in a FastAPI path operation function, similar to how the `common_parameters` function is used?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__dependencies__classes-as-dependencies#96",
+    "gold_source": "tutorial__dependencies__classes-as-dependencies"
+  },
+  {
+    "query": "Annotated dict as dependency",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__dependencies__classes-as-dependencies#96",
+    "gold_source": "tutorial__dependencies__classes-as-dependencies"
+  },
+  {
+    "query": "1. `Annotated`\n2. `Depends`\n3. `dict",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__dependencies__classes-as-dependencies#96",
+    "gold_source": "tutorial__dependencies__classes-as-dependencies"
+  },
+  {
+    "query": "How can you define a model in FastAPI that has a list of items, where each item has an optional list of images?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__body-nested-models#53",
+    "gold_source": "tutorial__body-nested-models"
+  },
+  {
+    "query": "nested models in fastapi",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__body-nested-models#53",
+    "gold_source": "tutorial__body-nested-models"
+  },
+  {
+    "query": "Item, Offer, Image",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__body-nested-models#53",
+    "gold_source": "tutorial__body-nested-models"
+  },
+  {
+    "query": "Can I omit the return type in an SSE endpoint in FastAPI and still have it work correctly?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__server-sent-events#446",
+    "gold_source": "tutorial__server-sent-events"
+  },
+  {
+    "query": "FastAPI SSE no return type",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__server-sent-events#446",
+    "gold_source": "tutorial__server-sent-events"
+  },
+  {
+    "query": "EventSourceResponse\nAsyncIterable\nIterable",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__server-sent-events#446",
+    "gold_source": "tutorial__server-sent-events"
+  },
+  {
+    "query": "What other middleware options are available in FastAPI?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__middleware#235",
+    "gold_source": "tutorial__middleware"
+  },
+  {
+    "query": "middleware alternatives",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__middleware#235",
+    "gold_source": "tutorial__middleware"
+  },
+  {
+    "query": "CORS",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__middleware#235",
+    "gold_source": "tutorial__middleware"
+  },
+  {
+    "query": "How does the `CORSMiddleware` handle incoming OPTIONS requests with Origin and Access-Control-Request-Method headers?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__cors#88",
+    "gold_source": "tutorial__cors"
+  },
+  {
+    "query": "CORS middleware options request",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__cors#88",
+    "gold_source": "tutorial__cors"
+  },
+  {
+    "query": "CORSMiddleware, OPTIONS, Origin",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__cors#88",
+    "gold_source": "tutorial__cors"
+  },
+  {
+    "query": "What are the main advantages of using FastAPI compared to alternative frameworks?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__path-params#274",
+    "gold_source": "tutorial__path-params"
+  },
+  {
+    "query": "fastapi path parameter types",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__path-params#274",
+    "gold_source": "tutorial__path-params"
+  },
+  {
+    "query": "Path Parameters, Editor support, Data parsing",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__path-params#274",
+    "gold_source": "tutorial__path-params"
+  },
+  {
+    "query": "How do the parameters declared in the `query_or_cookie_extractor` function, which is itself a dependency, also declare another dependency on the `query_extractor` function?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__dependencies__sub-dependencies#142",
+    "gold_source": "tutorial__dependencies__sub-dependencies"
+  },
+  {
+    "query": "Python dependency function with sub-dependencies",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__dependencies__sub-dependencies#142",
+    "gold_source": "tutorial__dependencies__sub-dependencies"
+  },
+  {
+    "query": "query_extractor, query_or_cookie_extractor, Depends, Annotated, Cookie",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__dependencies__sub-dependencies#142",
+    "gold_source": "tutorial__dependencies__sub-dependencies"
+  },
+  {
+    "query": "What is the purpose of the `check_valid_id` function in the provided code snippet?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__query-params-str-validations#303",
+    "gold_source": "tutorial__query-params-str-validations"
+  },
+  {
+    "query": "random.choice(data.items())",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__query-params-str-validations#303",
+    "gold_source": "tutorial__query-params-str-validations"
+  },
+  {
+    "query": "'Annotated', 'AfterValidator', 'status_code'",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__query-params-str-validations#303",
+    "gold_source": "tutorial__query-params-str-validations"
+  },
+  {
+    "query": "What is the purpose of the `HTTPException` class in the provided FastAPI code?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__handling-errors#192",
+    "gold_source": "tutorial__handling-errors"
+  },
+  {
+    "query": "fastapi http exception example",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__handling-errors#192",
+    "gold_source": "tutorial__handling-errors"
+  },
+  {
+    "query": "HTTPException, status_code, item_id",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__handling-errors#192",
+    "gold_source": "tutorial__handling-errors"
+  },
+  {
+    "query": "How can I specify a list of dependencies to be executed without needing their return values in a path operation decorator?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__dependencies__dependencies-in-path-operation-decorators#103",
+    "gold_source": "tutorial__dependencies__dependencies-in-path-operation-decorators"
+  },
+  {
+    "query": "Path operation decorator dependencies",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__dependencies__dependencies-in-path-operation-decorators#103",
+    "gold_source": "tutorial__dependencies__dependencies-in-path-operation-decorators"
+  },
+  {
+    "query": "'Depends', 'path operation decorator', 'path operation function'",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__dependencies__dependencies-in-path-operation-decorators#103",
+    "gold_source": "tutorial__dependencies__dependencies-in-path-operation-decorators"
+  },
+  {
+    "query": "Can I add multiple body parameters to a path operation function in FastAPI, even though a request can only have a single body?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__body-multiple-params#42",
+    "gold_source": "tutorial__body-multiple-params"
+  },
+  {
+    "query": "FastAPI multiple body parameters",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__body-multiple-params#42",
+    "gold_source": "tutorial__body-multiple-params"
+  },
+  {
+    "query": "path operation\nbody\npath operation function",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__body-multiple-params#42",
+    "gold_source": "tutorial__body-multiple-params"
+  },
+  {
+    "query": "How do you declare example data in the JSON Schema for a request body in a FastAPI route?",
+    "style": "natural",
+    "gold_chunk_id": "tutorial__schema-extra-example#364",
+    "gold_source": "tutorial__schema-extra-example"
+  },
+  {
+    "query": "OpenAPI examples in Body",
+    "style": "keyword",
+    "gold_chunk_id": "tutorial__schema-extra-example#364",
+    "gold_source": "tutorial__schema-extra-example"
+  },
+  {
+    "query": "Annotated, Body, Item, FastAPI",
+    "style": "identifier",
+    "gold_chunk_id": "tutorial__schema-extra-example#364",
+    "gold_source": "tutorial__schema-extra-example"
+  }
+]

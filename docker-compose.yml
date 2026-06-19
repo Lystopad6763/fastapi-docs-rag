@@ -1,33 +1,33 @@
-# docker-compose.yml — локальна інфраструктура для Q&A RAG API.
-# Піднімає дві БД у контейнерах однією командою `docker compose up -d`,
-# щоб не ставити Qdrant і Redis на машину вручну.
+# docker-compose.yml — local infrastructure for the Q&A RAG API.
+# Brings up both databases in containers with a single `docker compose up -d`,
+# so you don't have to install Qdrant and Redis on the host manually.
 
 services:
-  # --- Qdrant: векторна БД ---------------------------------------------------
-  # Зберігає embeddings: чанки документа (для пошуку) і питання (для semantic cache).
+  # --- Qdrant: vector database -----------------------------------------------
+  # Stores embeddings: document chunks (for search) and questions (for the semantic cache).
   qdrant:
-    image: qdrant/qdrant:latest      # готовий офіційний образ, нічого не компілюємо
-    container_name: qa_qdrant        # фіксоване ім'я — зручно для `docker exec`/логів
+    image: qdrant/qdrant:latest      # ready-made official image, nothing to compile
+    container_name: qa_qdrant        # fixed name — convenient for `docker exec` and logs
     ports:
-      - "6333:6333"   # REST API + веб-дашборд (http://localhost:6333/dashboard)
-      - "6334:6334"   # gRPC (швидший протокол; qdrant-client може ним користуватись)
+      - "6333:6333"   # REST API + web dashboard (http://localhost:6333/dashboard)
+      - "6334:6334"   # gRPC (faster protocol; qdrant-client can use it)
     volumes:
-      - qdrant_data:/qdrant/storage  # дані живуть у volume, а не всередині контейнера
+      - qdrant_data:/qdrant/storage  # data lives in a volume, not inside the container
 
-  # --- Redis: швидкі лічильники в пам'яті ------------------------------------
-  # Потрібен для token-bucket rate-limit і метрик. НЕ для векторів.
+  # --- Redis: fast in-memory counters ----------------------------------------
+  # Used for token-bucket rate limiting and metrics. NOT for vectors.
   redis:
-    image: redis:7-alpine            # alpine = мінімальний образ (~40MB)
+    image: redis:7-alpine            # alpine = minimal image (~40MB)
     container_name: qa_redis
     ports:
-      - "6379:6379"                  # стандартний порт Redis
+      - "6379:6379"                  # standard Redis port
     volumes:
-      - redis_data:/data             # персистимо лічильники між перезапусками
+      - redis_data:/data             # persist counters across restarts
 
 # --- Named volumes -----------------------------------------------------------
-# Окреме сховище Docker, що ПЕРЕЖИВАЄ перестворення контейнера.
-# Без цього `docker compose down` стирав би проіндексовані вектори — і довелось би
-# щоразу переіндексовувати документ заново.
+# Separate Docker storage that SURVIVES container recreation.
+# Without it, `docker compose down` would wipe the indexed vectors — and the document
+# would have to be reindexed from scratch every time.
 volumes:
   qdrant_data:
   redis_data:

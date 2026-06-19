@@ -1,206 +1,205 @@
 # ARCHITECTURE — `fastapi-docs-rag`
 
-> Постійна карта проєкту. Якщо повернувся після паузи й нічого не пам'ятаєш — читай цей файл.
-> README = швидкий старт; цей файл = «як воно влаштоване і ЧОМУ».
+> Living map of the project. If you come back after a break and don't remember anything, read this file.
+> README = quick start; this file = "how it works and WHY".
 
 ---
 
-## 1. Що це і навіщо
+## 1. What this is and why
 
-**Production-grade RAG API**, що відповідає на питання про **документацію FastAPI**.
-Не «скрипт, що кличе LLM», а сервіс із усіма продакшн-шарами: auth, rate-limit,
+**Production-grade RAG API** that answers questions about the **FastAPI documentation**.
+Not "a script that calls an LLM," but a service with all the production layers: auth, rate-limit,
 semantic cache, cost tracking, multi-provider fallback.
 
-- **ДЗ10** — збудувати цей сервіс (11 вимог §1–§11).
-- **ДЗ13** — контейнеризувати (multi-stage Docker <800MB).
-- **Корпус:** FastAPI `tutorial/` docs → **509 чанків** у Qdrant.
+- **The service** is the RAG API with its 11 production capabilities.
+- **Containerization:** multi-stage Docker (<800MB).
+- **Corpus:** FastAPI `tutorial/` docs → **509 chunks** in Qdrant.
 
-### Глосарій (щоб не плутатись)
-| Скор. | Що це |
+### Glossary (so nothing gets confused)
+| Abbr. | What it is |
 |---|---|
-| **RAG** | Retrieval-Augmented Generation: знайти релевантні фрагменти → дати LLM як контекст |
-| **SSE** | Server-Sent Events: стрім токенів у браузер (`text/event-stream`) |
-| **TTFT** | Time To First Token — затримка до першого токена (UX-метрика стрімінгу) |
-| **BM25** | лексичний (keyword) пошук; ловить точні ідентифікатори (`UploadFile`) |
-| **RRF** | Reciprocal Rank Fusion: зливає ранжування dense+BM25 (k=60) |
-| **CB** | Circuit Breaker: тимчасово вимикає модель, що часто падає |
-| **TTL** | Time To Live: термін життя запису в кеші (1 год) |
+| **RAG** | Retrieval-Augmented Generation: find relevant fragments → give them to the LLM as context |
+| **SSE** | Server-Sent Events: stream tokens to the browser (`text/event-stream`) |
+| **TTFT** | Time To First Token — latency until the first token (a streaming UX metric) |
+| **BM25** | lexical (keyword) search; catches exact identifiers (`UploadFile`) |
+| **RRF** | Reciprocal Rank Fusion: merges dense+BM25 rankings (k=60) |
+| **CB** | Circuit Breaker: temporarily disables a model that fails often |
+| **TTL** | Time To Live: lifetime of a cache entry (1 hour) |
 
 ---
 
-## 2. Потік запиту `/chat/stream` (життєвий цикл)
+## 2. Request flow `/chat/stream` (lifecycle)
 
 ```
 HTTP POST /chat/stream  {message}  + Header X-API-Key
    │
-   ├─ require_api_key (auth.py) ───────────── 401 якщо ключ невалідний
-   ├─ check_rate_limit (ratelimit.py) ─────── 429 + Retry-After якщо бюджет вичерпано
+   ├─ require_api_key (auth.py) ───────────── 401 if the key is invalid
+   ├─ check_rate_limit (ratelimit.py) ─────── 429 + Retry-After if the budget is exhausted
    │
-   └─ generate()  [SSE-стрім]
+   └─ generate()  [SSE stream]
         │
-        ├─ embed_query (1×, OpenAI) ─────────── один вектор на cache І retrieval
+        ├─ embed_query (1×, OpenAI) ─────────── one vector for both cache AND retrieval
         │
         ├─ cache.lookup (Qdrant) ─────────────┐
-        │      ├─ HIT (cosine>0.90, не TTL): стрімимо кеш → done(cost=0, cache_hit=true)
+        │      ├─ HIT (cosine>0.90, not TTL): stream the cache → done(cost=0, cache_hit=true)
         │      └─ MISS ↓
         │
-        ├─ retrieve_by_vector → top-3 чанки (Qdrant)
-        ├─ build_context + build_messages ──── grounded-промпт (цитати + abstention)
-        ├─ stream_chat (llm.py) ────────────── OpenRouter, ланцюжок моделей + CB
+        ├─ retrieve_by_vector → top-3 chunks (Qdrant)
+        ├─ build_context + build_messages ──── grounded prompt (citations + abstention)
+        ├─ stream_chat (llm.py) ────────────── OpenRouter, model chain + CB
         │      └─ async for token: yield SSE {"type":"token"}
-        │            (якщо клієнт відключився → return, НЕ логуємо/не кешуємо)
-        ├─ cache.store ──────────────────────── зберегти відповідь (TTL 1год)
-        ├─ log_request (SQLite) ─────────────── вартість + латентність + ttft
-        ├─ record_usage (Redis) ─────────────── списати реальні токени з бюджету
+        │            (if the client disconnects → return, do NOT log/cache)
+        ├─ cache.store ──────────────────────── store the answer (TTL 1h)
+        ├─ log_request (SQLite) ─────────────── cost + latency + ttft
+        ├─ record_usage (Redis) ─────────────── deduct real tokens from the budget
         └─ done {sources, usage, cost_usd, cache_hit:false}
 ```
 
-**Ключова ідея:** усе всередині `try` → будь-яка помилка йде клієнту як `SSE {"type":"error"}`,
-а не як 500 посеред стріму.
+**Key idea:** everything runs inside `try` → any error is sent to the client as `SSE {"type":"error"}`,
+not as a 500 in the middle of the stream.
 
 ---
 
-## 3. Хронологія побудови (як ми до цього дійшли)
+## 3. Build timeline (how we got here)
 
-Будували шар за шаром, перевіряючи кожен. Порядок = логіка залежностей (спершу дані, потім сервіс).
+We built it layer by layer, validating each one. The order follows the dependency logic (data first, then the service).
 
-| # | Крок | Файли | § ДЗ | Статус |
+| # | Stage | Files | Feature | Status |
 |---|---|---|---|---|
-| 1 | venv + залежності + `.env` | `requirements.txt`, `.env` | — | ✅ |
-| 2 | Інфра: Qdrant + Redis | `docker-compose.yml` | — | ✅ |
-| 3 | Завантажити корпус (резолв code-include'ів) | `scripts/fetch_docs.py` | — | ✅ |
-| 4 | Structure-aware чанкінг | `app/chunking.py` | §1 | ✅ |
-| 5 | Embeddings (OpenAI) | `app/embeddings.py` | §1 | ✅ |
-| 6 | Vector store + індексація (509 чанків) | `app/vectorstore.py`, `scripts/index.py` | §1 | ✅ |
-| 7 | RAG core: retrieve + grounded-промпт | `app/rag.py` | §1 | ✅ |
-| 8 | FastAPI app + SSE-стрім | `app/main.py` | §1,§2 | ✅ |
-| 9 | Auth: X-API-Key + 3 тарифи | `app/auth.py` | §3 | ✅ |
-| 10 | Cost tracking + `/usage/*` | `app/cost.py`, `app/pricing.py` | §6 | ✅ |
-| 11 | Rate limiting (Redis token bucket) | `app/ratelimit.py` | §4 | ✅ |
-| 12 | Multi-provider fallback + circuit breaker | `app/llm.py` | §7 | ✅ |
-| 13 | Semantic cache (Qdrant, TTL) | `app/cache.py` | §5 | ✅ |
+| 1 | venv + dependencies + `.env` | `requirements.txt`, `.env` | — | ✅ |
+| 2 | Infra: Qdrant + Redis | `docker-compose.yml` | — | ✅ |
+| 3 | Fetch the corpus (resolve code-includes) | `scripts/fetch_docs.py` | — | ✅ |
+| 4 | Structure-aware chunking | `app/chunking.py` | Chunking | ✅ |
+| 5 | Embeddings (OpenAI) | `app/embeddings.py` | Embeddings | ✅ |
+| 6 | Vector store + indexing (509 chunks) | `app/vectorstore.py`, `scripts/index.py` | Vector store | ✅ |
+| 7 | RAG core: retrieve + grounded prompt | `app/rag.py` | RAG core | ✅ |
+| 8 | FastAPI app + SSE stream | `app/main.py` | API + Streaming | ✅ |
+| 9 | Auth: X-API-Key + 3 tiers | `app/auth.py` | Auth | ✅ |
+| 10 | Cost tracking + `/usage/*` | `app/cost.py`, `app/pricing.py` | Cost tracking | ✅ |
+| 11 | Rate limiting (Redis token bucket) | `app/ratelimit.py` | Rate limiting | ✅ |
+| 12 | Multi-provider fallback + circuit breaker | `app/llm.py` | Fallback | ✅ |
+| 13 | Semantic cache (Qdrant, TTL) | `app/cache.py` | Semantic cache | ✅ |
 | 14 | Retrieval eval (dense vs hybrid, per-style) | `eval/` | — | ✅ |
-| 15 | **Security** (injection, length-limit, output filter) | `app/security.py` | §8 | ⬜ next |
-| 16 | **Concurrency** (semaphore, disconnect, counters) | `app/main.py` | §9 | ⬜ |
-| 17 | **Observability** (Langfuse v4) | — | §10 | ⬜ |
-| 18 | `/index/rebuild` (адмін) | `app/main.py` | — | ⬜ |
-| 19 | **ДЗ13:** multi-stage Docker + метрики | `Dockerfile`, `.dockerignore` | §11 | ⬜ |
+| 15 | **Security** (injection, length-limit, output filter) | `app/security.py` | Security | ✅ |
+| 16 | **Concurrency** (semaphore, disconnect, counters) | `app/main.py` | Concurrency | ✅ |
+| 17 | **Observability** (Langfuse v4) | `app/observability.py` | Observability | ✅ |
+| 18 | `/index/rebuild` (admin) | `app/indexer.py`, `app/main.py` | Admin | ✅ |
+| 19 | **Containerization:** multi-stage Docker + metrics | `Dockerfile`, `.dockerignore` | Docker | ⬜ |
 
-**Зроблено 7/11 вимог ДЗ10 + eval-розділ.** Далі: §8 → §9 → §10 → ДЗ13.
+**10 of the 11 production capabilities are done, plus the eval section.** Remaining: public deployment and containerization.
 
 ---
 
-## 4. Карта файлів (роль + ключові рішення)
+## 4. File map (role + key decisions)
 
-### `app/` — застосунок
-| Файл | Роль | Ключове рішення / ЧОМУ |
+### `app/` — the application
+| File | Role | Key decision / WHY |
 |---|---|---|
-| `config.py` | усі налаштування (pydantic-settings, читає `.env`) | один `settings` об'єкт; секрети лише з `.env` |
-| `schemas.py` | `ChatRequest {message}` | Q&A-бот без історії → одне поле |
-| `chunking.py` | structure-aware чанкер | 1 чанк = 1 секція по заголовках; **код у ```…``` ніколи не ріжеться**; breadcrumb заголовків додається в текст (краще embedding) |
-| `embeddings.py` | OpenAI embeddings | `text-embedding-3-small` (1536d); **без torch** → малий Docker; `sort by index` (порядок батча) |
-| `vectorstore.py` | Qdrant: колекції, upsert, search | HNSW + cosine; та сама обгортка і для чанків, і для кешу |
-| `rag.py` | retrieve top-k + grounded-промпт | system-промпт: відповідай ЛИШЕ з контексту, цитуй `[chunk_id]`, кажи «не знаю» (anti-галюцинація); запит у `<user_question>` (injection defense) |
-| `main.py` | FastAPI app + усі ендпоінти + конвеєр | `init_db()`+`ensure_cache_collection()` на старті; уся логіка стріму в `generate()`; помилки → SSE error |
-| `auth.py` | X-API-Key + 3 тарифи | кожен tier має `tokens_per_min` (для rate-limit) + `models` (ланцюжок fallback) |
-| `ratelimit.py` | Redis token bucket | лічильник = **реальні токени**, не запити; INCR+EXPIRE, вікно 60с; check ДО, record ПІСЛЯ |
-| `llm.py` | OpenRouter стрім + fallback + CB | timeout 15с на **встановлення** стріму; `NON_RETRYABLE={401,403,422}` (решта → наступна модель); CB: 5 фейлів/60с → пропуск; рахунок токенів через `include_usage` (fallback — tiktoken) |
-| `cache.py` | semantic cache у Qdrant | HIT якщо cosine > **0.90**; TTL 1год через `expire_at` (Qdrant не має вбуд. TTL); кеш глобальний |
-| `pricing.py` | ціни моделей (USD/1M ток.) | єдине джерело правди; невідома модель = $0 |
-| `cost.py` | SQLite-лог + агрегації | таблиця `request_costs`; `/usage/breakdown` рахує cache-rate, fallback-rate, p95 latency |
+| `config.py` | all settings (pydantic-settings, reads `.env`) | a single `settings` object; secrets only from `.env` |
+| `schemas.py` | `ChatRequest {message}` | Q&A bot without history → a single field |
+| `chunking.py` | structure-aware chunker | 1 chunk = 1 section by headings; **code inside ```…``` is never split**; a breadcrumb of headings is added to the text (better embedding) |
+| `embeddings.py` | OpenAI embeddings | `text-embedding-3-small` (1536d); **no torch** → small Docker image; `sort by index` (preserves batch order) |
+| `vectorstore.py` | Qdrant: collections, upsert, search | HNSW + cosine; the same wrapper for both chunks and cache |
+| `rag.py` | retrieve top-k + grounded prompt | system prompt: answer ONLY from context, cite `[chunk_id]`, say "I don't know" (anti-hallucination); the query is wrapped in `<user_question>` (injection defense) |
+| `main.py` | FastAPI app + all endpoints + pipeline | `init_db()`+`ensure_cache_collection()` on startup; all stream logic in `generate()`; errors → SSE error |
+| `auth.py` | X-API-Key + 3 tiers | each tier has `tokens_per_min` (for rate-limit) + `models` (fallback chain) |
+| `ratelimit.py` | Redis token bucket | counter = **real tokens**, not requests; INCR+EXPIRE, 60s window; check BEFORE, record AFTER |
+| `llm.py` | OpenRouter stream + fallback + CB | 15s timeout on **establishing** the stream; `NON_RETRYABLE={401,403,422}` (everything else → next model); CB: 5 failures/60s → skip; token count via `include_usage` (fallback — tiktoken) |
+| `cache.py` | semantic cache in Qdrant | HIT if cosine > **0.90**; TTL 1h via `expire_at` (Qdrant has no built-in TTL); the cache is global |
+| `pricing.py` | model prices (USD/1M tokens) | the single source of truth; unknown model = $0 |
+| `cost.py` | SQLite log + aggregations | `request_costs` table; `/usage/breakdown` computes cache-rate, fallback-rate, p95 latency |
 
-### `scripts/` — утиліти й тести (запуск: `python scripts/<x>.py`)
-| Файл | Що робить |
+### `scripts/` — utilities and tests (run with: `python scripts/<x>.py`)
+| File | What it does |
 |---|---|
-| `fetch_docs.py` | завантажує FastAPI docs → `data/docs/`; **резолвить `{* docs_src/*.py *}` include'и** (інакше код відсутній) |
-| `index.py` | чанкінг → embed → Qdrant (509 чанків) |
-| `ask.py` | `python scripts/ask.py "питання"` — відповідь у терміналі |
-| `test_embeddings.py` | sanity ембедингу |
-| `test_retrieval.py` | retrieval на реальному індексі |
-| `test_rag.py` | показати побудований grounded-промпт |
-| `test_stream.py` | тест `/chat/stream` SSE (шле `X-API-Key: demo-pro`) |
-| `test_ratelimit.py` | довести 429 |
-| `test_fallback.py` | fallback (невалідна primary-модель) |
+| `fetch_docs.py` | downloads the FastAPI docs → `data/docs/`; **resolves `{* docs_src/*.py *}` includes** (otherwise the code is missing) |
+| `index.py` | chunking → embed → Qdrant (509 chunks) |
+| `ask.py` | `python scripts/ask.py "question"` — answer in the terminal |
+| `test_embeddings.py` | embedding sanity check |
+| `test_retrieval.py` | retrieval against the real index |
+| `test_rag.py` | show the built grounded prompt |
+| `test_stream.py` | test `/chat/stream` SSE (sends `X-API-Key: demo-pro`) |
+| `test_ratelimit.py` | demonstrate 429 |
+| `test_fallback.py` | fallback (invalid primary model) |
 | `test_cache.py` | MISS → HIT |
-| `list_free_models.py` | живий список `:free`-моделей OpenRouter |
+| `list_free_models.py` | live list of OpenRouter `:free` models |
 
-### `eval/` — retrieval-оцінка (для звіту)
-| Файл | Що |
+### `eval/` — retrieval evaluation (for the report)
+| File | What |
 |---|---|
-| `build_dataset.py` | генерує датасет: 15 чанків × 3 стилі (natural / keyword / identifier), seed=42 |
-| `evaluate.py` | dense vs hybrid (Okapi/Plus/weighted), overall + **per-style**; метрики recall@k, src_recall@k, MRR |
-| `dataset.json` | згенерований датасет (gold = chunk_id + source) |
-| `hyde.json`, `rewrites.json` | артефакти експериментів (HyDE / query-rewrite — **зашкодили**, лишені для історії) |
+| `build_dataset.py` | generates the dataset: 15 chunks × 3 styles (natural / keyword / identifier), seed=42 |
+| `evaluate.py` | dense vs hybrid (Okapi/Plus/weighted), overall + **per-style**; metrics recall@k, src_recall@k, MRR |
+| `dataset.json` | the generated dataset (gold = chunk_id + source) |
+| `hyde.json`, `rewrites.json` | experiment artifacts (HyDE / query-rewrite — **they hurt results**, kept for the record) |
 
-### Корінь
-| Файл | Що |
+### Root
+| File | What |
 |---|---|
-| `requirements.txt` | залежності (версії пінимо за фактично встановленими) |
-| `.env` / `.env.example` | секрети (`.env` у `.gitignore`!) / шаблон |
+| `requirements.txt` | dependencies (versions pinned to what is actually installed) |
+| `.env` / `.env.example` | secrets (`.env` is in `.gitignore`!) / template |
 | `docker-compose.yml` | Qdrant (6333/6334) + Redis (6379), named volumes |
-| `data/docs/` | корпус (50 .md) · `data/costs.db` — SQLite (у `.gitignore`) |
-| `README.md` | швидкий старт + статус |
-| `JOURNAL.md` | приватний лог рішень+помилок (у `.gitignore`, не публікується) |
-| `ARCHITECTURE.md` | цей файл |
+| `data/docs/` | corpus (50 .md) · `data/costs.db` — SQLite (in `.gitignore`) |
+| `README.md` | quick start + status |
+| `ARCHITECTURE.md` | this file |
 
 ---
 
-## 5. Ключові інженерні рішення (звідки «production»)
+## 5. Key engineering decisions (where "production" comes from)
 
-1. **Один embedding на запит** — кешуємо й шукаємо тим самим вектором (не два виклики ембедера).
-2. **Grounding + цитати + abstention** — бот не галюцинує: відповідає лише з чанків, цитує `[id]`, каже «не знаю».
-3. **Rate-limit по токенах, не по запитах** — справедливо до різних розмірів запитів; вікно 60с у Redis.
-4. **Fallback-ланцюжок per tier + circuit breaker** — впала primary-модель → наступна; постійно падає → пропускаємо.
-5. **Semantic cache** — близькі перефрази (cosine>0.90) віддаємо безкоштовно й миттєво.
-6. **Cost tracking з p95/cache-rate/fallback-rate** — видимість витрат і поведінки (не «чорна скринька»).
-7. **Structure-aware чанкінг** — код цілим, breadcrumb заголовків у тексті → кращий retrieval.
-8. **Eval-driven retrieval** — зміряли dense vs hybrid; `hybrid_plus` найкращий, `src_recall@3=0.933`.
+1. **One embedding per request** — we cache and search with the same vector (not two embedder calls).
+2. **Grounding + citations + abstention** — the bot does not hallucinate: it answers only from chunks, cites `[id]`, and says "I don't know."
+3. **Rate-limit by tokens, not by requests** — fair across different request sizes; 60s window in Redis.
+4. **Per-tier fallback chain + circuit breaker** — primary model failed → next one; constantly failing → skip it.
+5. **Semantic cache** — near paraphrases (cosine>0.90) are served for free and instantly.
+6. **Cost tracking with p95/cache-rate/fallback-rate** — visibility into spend and behavior (not a "black box").
+7. **Structure-aware chunking** — code kept whole, heading breadcrumb in the text → better retrieval.
+8. **Eval-driven retrieval** — we measured dense vs hybrid; `hybrid_plus` is the best, `src_recall@3=0.933`.
 
-### Підсумок eval (для звіту)
+### Eval summary (for the report)
 | method | recall@1 | recall@3 | recall@5 | src_recall@3 | mrr |
 |---|---|---|---|---|---|
 | dense | 0.40 | 0.622 | 0.778 | 0.911 | 0.532 |
 | hybrid_okapi | 0.511 | 0.733 | 0.822 | 0.933 | 0.62 |
 | **hybrid_plus** | **0.556** | 0.711 | **0.844** | **0.933** | **0.653** |
 
-> **Урок:** BM25-токенізація мусить зривати пунктуацію (`re.findall(r"[a-z0-9_]+")`), інакше код-ідентифікатори не матчаться. Фікс підняв identifier-MRR 0.402→0.652 і «перевернув» результат на користь hybrid.
-> **Future work:** вмикання hybrid у прод-retrieval + cross-encoder reranker (для строгого recall@1).
+> **Lesson:** BM25 tokenization must strip punctuation (`re.findall(r"[a-z0-9_]+")`), otherwise code identifiers don't match. The fix raised identifier-MRR 0.402→0.652 and "flipped" the result in favor of hybrid.
+> **Future work:** enable hybrid in production retrieval + a cross-encoder reranker (for strict recall@1).
 
 ---
 
-## 6. Головні налаштування (`config.py`)
-| Параметр | Значення | Сенс |
+## 6. Main settings (`config.py`)
+| Parameter | Value | Meaning |
 |---|---|---|
-| `embed_model` / `embed_dim` | `text-embedding-3-small` / 1536 | простір ембедингів |
-| `top_k` | 3 | скільки чанків у контекст |
-| `chunk_tokens` / overlap | 500 / 50 | (чанкер має власний `MAX_TOKENS=700`) |
-| `cache_threshold` | 0.90 | поріг cosine для HIT |
-| `cache_ttl_seconds` | 3600 | TTL кешу |
-| `max_input_chars` | 4000 | ліміт запиту (§8) |
-| `max_concurrent_llm` | 20 | семафор (§9) |
-| `llm_timeout_seconds` | 15.0 | таймаут на встановлення стріму |
+| `embed_model` / `embed_dim` | `text-embedding-3-small` / 1536 | embedding space |
+| `top_k` | 3 | how many chunks go into the context |
+| `chunk_tokens` / overlap | 500 / 50 | (the chunker has its own `MAX_TOKENS=700`) |
+| `cache_threshold` | 0.90 | cosine threshold for a HIT |
+| `cache_ttl_seconds` | 3600 | cache TTL |
+| `max_input_chars` | 4000 | request limit (security) |
+| `max_concurrent_llm` | 20 | semaphore (concurrency) |
+| `llm_timeout_seconds` | 15.0 | timeout for establishing the stream |
 
 ---
 
-## 7. Як запустити
+## 7. How to run
 ```powershell
-.venv\Scripts\Activate.ps1            # має з'явитись (.venv) у промпті
+.venv\Scripts\Activate.ps1            # (.venv) should appear in the prompt
 pip install -r requirements.txt
-# .env: вставити OPENROUTER_API_KEY і OPENAI_API_KEY
+# .env: paste OPENROUTER_API_KEY and OPENAI_API_KEY
 docker compose up -d                  # Qdrant + Redis
-python scripts/fetch_docs.py          # один раз
-python scripts/index.py               # один раз → 509 чанків
+python scripts/fetch_docs.py          # once
+python scripts/index.py               # once → 509 chunks
 uvicorn app.main:app --reload --port 8000
-python scripts/test_stream.py         # перевірка
+python scripts/test_stream.py         # smoke check
 ```
 
-**API-ключі:** `demo-free` (5K tok/min) · `demo-pro` (20K) · `demo-enterprise` (100K).
+**API keys:** `demo-free` (5K tok/min) · `demo-pro` (20K) · `demo-enterprise` (100K).
 
 ---
 
-## 8. Граблі (з досвіду — деталі в JOURNAL.md)
-- **Завжди перевіряй `(.venv)` у промпті** — інакше підхопиться чужий Python (`ModuleNotFoundError`).
-- **`docker compose up -d` ПЕРЕД запуском** — app падає, якщо Qdrant down (`WinError 10061`).
-- **Зміна `.env` або пакетні правки коду → ПОВНИЙ рестарт uvicorn** (`--reload` ненадійний, тримає старий процес).
-- **OpenRouter:** порожній ключ → 401; Credit limit=0 блокує навіть `:free` → 403; `:free` часто 429 (upstream).
-- **PowerShell:** `&`/пробіли в шляху → лапки; `bare .py` не запускається → `python scripts/x.py`.
+## 8. Gotchas (from experience)
+- **Always check for `(.venv)` in the prompt** — otherwise the wrong Python gets picked up (`ModuleNotFoundError`).
+- **`docker compose up -d` BEFORE starting** — the app crashes if Qdrant is down (`WinError 10061`).
+- **Changing `.env` or batch code edits → FULL uvicorn restart** (`--reload` is unreliable, holds the old process).
+- **OpenRouter:** an empty key → 401; Credit limit=0 blocks even `:free` → 403; `:free` is often 429 (upstream).
+- **PowerShell:** `&`/spaces in a path → use quotes; a bare `.py` won't run → `python scripts/x.py`.

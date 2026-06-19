@@ -1,5 +1,4 @@
-# Прямі залежності, запіновані під реально встановлені версії (Python 3.13, 2026-06-07).
-# Повний транзитивний знімок — у requirements.lock.txt
+# Direct dependencies, pinned to the actually installed versions (Python 3.13).
 
 # Web / API
 fastapi==0.136.3
@@ -7,7 +6,7 @@ uvicorn[standard]==0.49.0
 pydantic==2.13.4
 pydantic-settings==2.14.1
 
-# LLM (OpenRouter) + Embeddings (OpenAI) через один SDK
+# LLM (OpenRouter) + Embeddings (OpenAI) via a single SDK
 openai==2.41.0
 
 # Vector DB (chunks + semantic cache)
@@ -28,3 +27,6 @@ python-dotenv==1.2.2
 
 # Eval (retrieval benchmark: hybrid BM25 + dense)
 rank-bm25>=0.2.2
+
+# Reranker (CrossEncoder) — optional production lever (settings.rerank_enabled); pulls in torch
+sentence-transformers>=3.0

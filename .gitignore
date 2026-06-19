@@ -1,4 +1,4 @@
-# === Secrets (НІКОЛИ не комітити) ===
+# === Secrets (NEVER commit) ===
 .env
 .env.*
 !.env.example
@@ -16,20 +16,20 @@ __pycache__/
 venv/
 env/
 
-# === Локальний стан / БД (відтворюється на льоту) ===
+# === Local state / databases (regenerated on the fly) ===
 data/costs.db
 *.db
 *.sqlite3
 
-# === Логи / журнали ===
+# === Logs ===
 *.log
 logs/
 suspicious_requests.log
 
-# === Приватний робочий журнал (звіт ведеться окремо) ===
+# === Private working journal (kept out of the public repo) ===
 JOURNAL.md
 
-# === Qdrant / Redis локальне сховище (якщо без docker-volume) ===
+# === Qdrant / Redis local storage (when not using docker volumes) ===
 qdrant_storage/
 redis-data/
 

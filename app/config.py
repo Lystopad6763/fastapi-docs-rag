@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     embed_model: str = "text-embedding-3-small"
     embed_dim: int = 1536
     qdrant_url: str = "http://localhost:6333"
+    qdrant_api_key: str = ""   # required for Qdrant Cloud; empty for a local container
     chunks_collection: str = "docs_chunks"
     cache_collection: str = "semantic_cache"
     redis_url: str = "redis://localhost:6379/0"

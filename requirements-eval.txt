@@ -1,0 +1,12 @@
+# Evaluation-only dependencies. Install with: pip install -r requirements-eval.txt
+# These are NOT needed to run the API. They are pulled in only for the retrieval
+# benchmark (eval/) and the optional CrossEncoder reranker (settings.rerank_enabled),
+# which drags in torch — kept out of the production image on purpose.
+
+-r requirements.txt
+
+# Hybrid retrieval (BM25) used by the eval harness
+rank-bm25>=0.2.2
+
+# CrossEncoder reranker (pulls in torch); enabled at runtime via settings.rerank_enabled
+sentence-transformers>=3.0

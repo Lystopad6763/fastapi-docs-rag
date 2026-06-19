@@ -1,0 +1,33 @@
+# Keep the build context small and never ship local state or secrets.
+.venv/
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.pyc
+.git/
+.gitignore
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Local state (the app recreates these at runtime)
+*.db
+*.log
+data/costs.db
+qdrant_storage/
+
+# Not needed in the runtime image
+eval/
+scripts/
+tests/
+results/
+JOURNAL.md
+ARCHITECTURE.md
+requirements-eval.txt
+*.ipynb
+.pytest_cache/
+.vscode/
+.idea/
+.DS_Store

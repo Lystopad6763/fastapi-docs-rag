@@ -1,10 +1,16 @@
-# Direct dependencies, pinned to the actually installed versions (Python 3.13).
+# Production dependencies, pinned to the installed versions (Python 3.13).
+# This set is intentionally torch-free: embeddings (OpenAI) and the LLM (OpenRouter)
+# are reached over HTTP, so the runtime image stays small (<800MB). The optional
+# CrossEncoder reranker and the BM25 eval harness live in requirements-eval.txt.
 
 # Web / API
 fastapi==0.136.3
 uvicorn[standard]==0.49.0
 pydantic==2.13.4
 pydantic-settings==2.14.1
+
+# HTTP client (used directly for a keep-alive embeddings connection)
+httpx==0.28.1
 
 # LLM (OpenRouter) + Embeddings (OpenAI) via a single SDK
 openai==2.41.0
@@ -24,9 +30,3 @@ langfuse==4.7.1
 
 # Config
 python-dotenv==1.2.2
-
-# Eval (retrieval benchmark: hybrid BM25 + dense)
-rank-bm25>=0.2.2
-
-# Reranker (CrossEncoder) — optional production lever (settings.rerank_enabled); pulls in torch
-sentence-transformers>=3.0

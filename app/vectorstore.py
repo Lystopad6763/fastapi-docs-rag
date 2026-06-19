@@ -11,7 +11,9 @@ from app.config import settings
 
 
 def get_client() -> QdrantClient:
-    return QdrantClient(url=settings.qdrant_url)
+    # api_key is required for Qdrant Cloud; pass None for a local container so the
+    # client doesn't send an empty auth header.
+    return QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key or None)
 
 
 def ensure_collection(client: QdrantClient, name: str, recreate: bool = False) -> None:

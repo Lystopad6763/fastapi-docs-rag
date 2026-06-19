@@ -1,12 +1,12 @@
-"""Eval — РЕАЛІСТИЧНИЙ датасет: по кожному чанку 3 стилі запиту (як реально питають юзери).
+"""Build a realistic evaluation dataset: 3 query styles per chunk, mirroring how users ask.
 
-Стилі:
-  natural    — повне питання-речення (dense-friendly)
-  keyword    — терсі ключові слова, як у Google (hybrid-friendly)
-  identifier — точні назви API/ідентифікатори (BM25-friendly)
+Styles:
+  natural    — a full-sentence question (dense-friendly)
+  keyword    — terse keywords, like a Google search (hybrid-friendly)
+  identifier — exact API names / identifiers (BM25-friendly)
 
-Усі 3 мають той самий gold (chunk_id + source). seed=42 -> відтворювано.
-Запуск:  python eval/build_dataset.py
+All 3 share the same gold target (chunk_id + source). seed=42 makes generation reproducible.
+Run:  python eval/build_dataset.py
 """
 from __future__ import annotations
 import collections
@@ -69,7 +69,7 @@ def main() -> None:
 
     out = pathlib.Path(__file__).parent / "dataset.json"
     out.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Збережено {len(data)} запитів ({N_CHUNKS} чанків × {len(STYLES)} стилі) -> {out}")
+    print(f"Saved {len(data)} queries ({N_CHUNKS} chunks x {len(STYLES)} styles) -> {out}")
 
 
 if __name__ == "__main__":

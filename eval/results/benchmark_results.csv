@@ -1,0 +1,7 @@
+index,retriever,recall@1,recall@10,mrr@10,multiFC@10,p50_ms,p95_ms,p99_ms,n_answerable
+docs_chunks,dense,0.905,1.000,0.946,0.923,0.2,0.3,0.5,63
+docs_chunks,hybrid_plus,0.857,1.000,0.923,0.923,2.2,3.6,4.0,63
+docs_chunks,reranker,0.968,1.000,0.981,0.846,2681.0,3459.5,10434.4,63
+docs_chunks_nocode,dense,0.873,1.000,0.930,0.923,0.1,0.3,0.6,63
+docs_chunks_nocode,hybrid_plus,0.889,1.000,0.939,0.923,2.3,3.7,4.3,63
+docs_chunks_nocode,reranker,0.968,1.000,0.981,0.846,2695.3,3349.1,3620.2,63

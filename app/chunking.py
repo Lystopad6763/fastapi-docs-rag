@@ -1,14 +1,14 @@
 """Structure-aware markdown chunking.
 
-Підхід chunk-by-structure: 1 chunk = 1 логічна секція по заголовках,
-з метаданими й розміром у межах 256-1024 токени. Кожен чанк несе breadcrumb заголовків
-("Query Parameters > Optional parameters"), який додається на початок тексту —
-це дає семантичний контекст і покращує і embedding, і retrieval.
+Chunk-by-structure approach: one chunk = one logical section delimited by headings,
+carrying metadata and a size in the 256-1024 token range. Each chunk is prefixed with a
+heading breadcrumb ("Query Parameters > Optional parameters"); this adds semantic context
+and improves both embedding and retrieval.
 
-Правила:
-  * код у ```...``` НІКОЛИ не ріжеться всередині;
-  * секція > MAX_TOKENS ріжеться по безпечних межах (абзац / межа коду);
-  * порожні секції пропускаються.
+Rules:
+  * code fences (```...```) are NEVER split internally;
+  * a section larger than MAX_TOKENS is split on safe boundaries (paragraph / code fence);
+  * empty sections are skipped.
 """
 from __future__ import annotations
 import re
@@ -16,13 +16,13 @@ from dataclasses import dataclass
 
 import tiktoken
 
-_ENC = tiktoken.get_encoding("cl100k_base")   # той самий токенайзер, що в text-embedding-3
+_ENC = tiktoken.get_encoding("cl100k_base")   # same tokenizer as text-embedding-3
 HEADER_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
-ANCHOR_RE = re.compile(r"\s*\{[^}]*\}\s*$")    # прибрати FastAPI "{ #anchor }"
+ANCHOR_RE = re.compile(r"\s*\{[^}]*\}\s*$")    # strip FastAPI's "{ #anchor }" suffixes
 FENCE_RE = re.compile(r"^```")
 
-MAX_TOKENS = 700    # м'який максимум на чанк (типово 256-1024)
-MIN_TOKENS = 24     # секції дрібніші — пропускаємо як шум
+MAX_TOKENS = 700    # soft maximum per chunk (typically 256-1024)
+MIN_TOKENS = 24     # smaller sections are skipped as noise
 
 
 def ntok(s: str) -> int:
@@ -31,25 +31,25 @@ def ntok(s: str) -> int:
 
 @dataclass
 class Chunk:
-    source: str      # ім'я файлу (без .md)
-    heading: str     # breadcrumb заголовків
-    text: str        # breadcrumb + тіло секції (саме це ембедимо)
+    source: str      # file name (without .md)
+    heading: str     # heading breadcrumb
+    text: str        # breadcrumb + section body (this is what gets embedded)
     tokens: int
 
 
 def _blocks(body: str) -> list[str]:
-    """Розбити тіло секції на блоки: код-фенс = цілий блок, текст — по абзацах."""
+    """Split a section body into blocks: a code fence is one whole block, text is split by paragraph."""
     blocks: list[str] = []
     cur: list[str] = []
     in_code = False
     for line in body.split("\n"):
         if FENCE_RE.match(line):
-            if not in_code:                       # відкриття коду — злити текст
+            if not in_code:                       # opening fence — flush accumulated text
                 if "\n".join(cur).strip():
                     blocks.append("\n".join(cur).rstrip())
                 cur = [line]
                 in_code = True
-            else:                                 # закриття коду — зберегти блок цілим
+            else:                                 # closing fence — keep the code block intact
                 cur.append(line)
                 blocks.append("\n".join(cur))
                 cur = []
@@ -57,7 +57,7 @@ def _blocks(body: str) -> list[str]:
             continue
         if in_code:
             cur.append(line)
-        elif line.strip() == "":                  # порожній рядок = межа абзацу
+        elif line.strip() == "":                  # blank line = paragraph boundary
             if "\n".join(cur).strip():
                 blocks.append("\n".join(cur).rstrip())
                 cur = []
@@ -69,7 +69,7 @@ def _blocks(body: str) -> list[str]:
 
 
 def _pack(blocks: list[str], budget: int) -> list[str]:
-    """Жадібно складати блоки в чанки до budget токенів (код-блок > budget — соло)."""
+    """Greedily pack blocks into chunks up to `budget` tokens (a code block larger than budget stands alone)."""
     chunks: list[str] = []
     cur: list[str] = []
     cur_tok = 0
@@ -85,8 +85,26 @@ def _pack(blocks: list[str], budget: int) -> list[str]:
     return chunks
 
 
+def prose_only(text: str) -> str:
+    """Return the text WITHOUT code blocks (keeping the breadcrumb + prose).
+
+    Used to test whether it is better NOT to embed code (which dilutes the dense vector),
+    keeping it only in the payload. The breadcrumb `# Heading` is preserved (it is not a code
+    fence), so even a code-only chunk does not become empty.
+    """
+    out: list[str] = []
+    in_code = False
+    for line in text.split("\n"):
+        if FENCE_RE.match(line):
+            in_code = not in_code
+            continue                       # drop the ``` fence lines themselves too
+        if not in_code:
+            out.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+
+
 def chunk_markdown(text: str, source: str) -> list[Chunk]:
-    stack: list[tuple[int, str]] = []          # ієрархія заголовків (level, title)
+    stack: list[tuple[int, str]] = []          # heading hierarchy (level, title)
     sections: list[tuple[str, str]] = []       # (breadcrumb, body)
     body: list[str] = []
     in_code = False
@@ -106,7 +124,7 @@ def chunk_markdown(text: str, source: str) -> list[Chunk]:
             continue
         m = None if in_code else HEADER_RE.match(line)
         if m:
-            flush()                            # тіло належить ПОПЕРЕДНЬОМУ заголовку
+            flush()                            # the body belongs to the PREVIOUS heading
             level = len(m.group(1))
             title = ANCHOR_RE.sub("", m.group(2)).strip()
             while stack and stack[-1][0] >= level:

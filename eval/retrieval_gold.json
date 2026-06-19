@@ -1,0 +1,567 @@
+[
+  {
+    "id": "single-01",
+    "query": "How do I run some code after returning the response without blocking the client?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__background-tasks"],
+    "note": "BackgroundTasks.add_task"
+  },
+  {
+    "id": "single-02",
+    "query": "How do I structure a large FastAPI project across multiple files and routers?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__bigger-applications"],
+    "note": "APIRouter, include_router, prefix, tags"
+  },
+  {
+    "id": "single-03",
+    "query": "How do I add validation and metadata (title, description) to individual Pydantic model fields?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__body-fields"],
+    "note": "Field inside a model"
+  },
+  {
+    "id": "single-04",
+    "query": "How do I accept multiple Pydantic models in a single request body and embed a single one?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__body-multiple-params"],
+    "note": "Body(embed=True)"
+  },
+  {
+    "id": "single-05",
+    "query": "How do I define deeply nested JSON models with lists and sets?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__body-nested-models"],
+    "note": "list[Item], set, HttpUrl, nested BaseModel"
+  },
+  {
+    "id": "single-06",
+    "query": "How do I implement a partial update with PATCH using exclude_unset?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__body-updates"],
+    "note": "model_dump(exclude_unset=True), model_copy(update=...)"
+  },
+  {
+    "id": "single-07",
+    "query": "How do I accept a JSON request body declared with a Pydantic model?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__body"],
+    "note": "BaseModel as POST body"
+  },
+  {
+    "id": "single-08",
+    "query": "How do I read several cookies at once using a Pydantic model?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__cookie-param-models"],
+    "note": "Cookie + BaseModel + extra=forbid"
+  },
+  {
+    "id": "single-09",
+    "query": "How do I read a single cookie value from a request?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__cookie-params"],
+    "note": "Cookie() parameter"
+  },
+  {
+    "id": "single-10",
+    "query": "How do I enable CORS so my frontend on another origin can call the API?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__cors"],
+    "note": "CORSMiddleware, allow_origins"
+  },
+  {
+    "id": "single-11",
+    "query": "How do I attach a debugger and run FastAPI directly from my IDE?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__debugging"],
+    "note": "uvicorn.run under __name__ == __main__"
+  },
+  {
+    "id": "single-12",
+    "query": "How do I use a Python class as a dependency instead of a function?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__dependencies__classes-as-dependencies"],
+    "note": "Depends(ClassName)"
+  },
+  {
+    "id": "single-13",
+    "query": "How do I add a dependency that runs for validation but whose return value I don't need?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__dependencies__dependencies-in-path-operation-decorators"],
+    "note": "dependencies=[Depends(...)] on the decorator"
+  },
+  {
+    "id": "single-14",
+    "query": "How do I clean up a resource like a DB session after the request using yield?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__dependencies__dependencies-with-yield"],
+    "note": "yield + try/finally"
+  },
+  {
+    "id": "single-15",
+    "query": "How do I apply one dependency to every endpoint in the whole application?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__dependencies__global-dependencies"],
+    "note": "FastAPI(dependencies=[...])"
+  },
+  {
+    "id": "single-16",
+    "query": "What is dependency injection in FastAPI and why use Depends?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__dependencies__index"],
+    "note": "DI overview"
+  },
+  {
+    "id": "single-17",
+    "query": "Can a dependency itself depend on another dependency, and are results cached?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__dependencies__sub-dependencies"],
+    "note": "sub-dependencies, use_cache=False"
+  },
+  {
+    "id": "single-18",
+    "query": "How do I convert a Pydantic model with datetime fields into JSON-compatible data?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__encoder"],
+    "note": "jsonable_encoder"
+  },
+  {
+    "id": "single-19",
+    "query": "Can I use UUID, Decimal, and timedelta types in my request parameters?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__extra-data-types"],
+    "note": "UUID, datetime, Decimal, frozenset"
+  },
+  {
+    "id": "single-20",
+    "query": "How do I customize the API title, version, and the docs_url / redoc_url?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__metadata"],
+    "note": "FastAPI(title=, version=, docs_url=, redoc_url=)"
+  },
+  {
+    "id": "single-21",
+    "query": "How do I create my first FastAPI app and where do I find the Swagger UI?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__first-steps"],
+    "note": "@app.get, /docs, fastapi dev"
+  },
+  {
+    "id": "single-22",
+    "query": "How do I raise an HTTP 404 with a custom detail message?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__handling-errors"],
+    "note": "HTTPException(status_code=404, detail=...)"
+  },
+  {
+    "id": "single-23",
+    "query": "How do I validate several headers together with a Pydantic model?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__header-param-models"],
+    "note": "Header + BaseModel"
+  },
+  {
+    "id": "single-24",
+    "query": "Why does FastAPI convert header names with underscores to hyphens, and how do I disable it?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__header-params"],
+    "note": "Header(convert_underscores=False)"
+  },
+  {
+    "id": "single-25",
+    "query": "How do I add custom middleware that sets an X-Process-Time response header?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__middleware"],
+    "note": "@app.middleware('http'), call_next"
+  },
+  {
+    "id": "single-26",
+    "query": "How do I mark an endpoint as deprecated and give it a summary and tags in the docs?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__path-operation-configuration"],
+    "note": "deprecated=True, summary, tags"
+  },
+  {
+    "id": "single-27",
+    "query": "How do I require a path parameter to be an integer greater than zero?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__path-params-numeric-validations"],
+    "note": "Path(gt=0, ge=, le=)"
+  },
+  {
+    "id": "single-28",
+    "query": "How do I restrict a path parameter to a fixed set of values using an Enum?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__path-params"],
+    "note": "Enum path param, :path converter"
+  },
+  {
+    "id": "single-29",
+    "query": "How do I group related query parameters into a single Pydantic model and forbid extras?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__query-param-models"],
+    "note": "Query + BaseModel + extra=forbid"
+  },
+  {
+    "id": "single-30",
+    "query": "How do I set min_length, max_length, and a regex pattern on a query parameter?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__query-params-str-validations"],
+    "note": "Query(min_length=, max_length=, pattern=)"
+  },
+  {
+    "id": "single-31",
+    "query": "How do I make a query parameter optional with a default value?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__query-params"],
+    "note": "q: str | None = None"
+  },
+  {
+    "id": "single-32",
+    "query": "How do I handle file uploads and read the filename and content type?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__request-files"],
+    "note": "File, UploadFile, python-multipart"
+  },
+  {
+    "id": "single-33",
+    "query": "How do I accept form fields declared as a Pydantic model?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__request-form-models"],
+    "note": "Form + BaseModel"
+  },
+  {
+    "id": "single-34",
+    "query": "How do I handle a classic HTML form submission with Form fields?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__request-forms"],
+    "note": "Form(), application/x-www-form-urlencoded"
+  },
+  {
+    "id": "single-35",
+    "query": "How do I filter sensitive fields from responses using response_model and exclude unset values?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__response-model"],
+    "note": "response_model, response_model_exclude_unset"
+  },
+  {
+    "id": "single-36",
+    "query": "How do I add multiple named examples to my models so they show in the OpenAPI docs?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__schema-extra-example"],
+    "note": "json_schema_extra, openapi_examples"
+  },
+  {
+    "id": "single-37",
+    "query": "How do I build a /token login endpoint that accepts username and password form fields?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__security__simple-oauth2"],
+    "note": "OAuth2PasswordRequestForm"
+  },
+  {
+    "id": "single-38",
+    "query": "How do I use SQLModel with FastAPI to talk to a SQL database?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__sql-databases"],
+    "note": "SQLModel, Session, create_engine, select"
+  },
+  {
+    "id": "single-39",
+    "query": "How do I serve static CSS, JS, and image files?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__static-files"],
+    "note": "StaticFiles, app.mount"
+  },
+  {
+    "id": "single-40",
+    "query": "How do I test FastAPI endpoints with TestClient and pytest?",
+    "style": "natural",
+    "type": "single",
+    "relevant_sources": ["tutorial__testing"],
+    "note": "TestClient, response.json()"
+  },
+
+  {
+    "id": "kw-01",
+    "query": "background tasks after response",
+    "style": "keyword",
+    "type": "single",
+    "relevant_sources": ["tutorial__background-tasks"],
+    "note": "keyword style for single-01"
+  },
+  {
+    "id": "kw-02",
+    "query": "fastapi cors allow origins frontend",
+    "style": "keyword",
+    "type": "single",
+    "relevant_sources": ["tutorial__cors"],
+    "note": "keyword style for single-10"
+  },
+  {
+    "id": "kw-03",
+    "query": "optional query parameter default value",
+    "style": "keyword",
+    "type": "single",
+    "relevant_sources": ["tutorial__query-params"],
+    "note": "keyword style for single-31"
+  },
+  {
+    "id": "kw-04",
+    "query": "upload file fastapi",
+    "style": "keyword",
+    "type": "single",
+    "relevant_sources": ["tutorial__request-files"],
+    "note": "keyword style for single-32"
+  },
+  {
+    "id": "kw-05",
+    "query": "custom status code 201 created",
+    "style": "keyword",
+    "type": "single",
+    "relevant_sources": ["tutorial__response-status-code"],
+    "note": "keyword style"
+  },
+  {
+    "id": "id-01",
+    "query": "BackgroundTasks add_task",
+    "style": "identifier",
+    "type": "single",
+    "relevant_sources": ["tutorial__background-tasks"],
+    "note": "identifier style"
+  },
+  {
+    "id": "id-02",
+    "query": "CORSMiddleware add_middleware allow_origins",
+    "style": "identifier",
+    "type": "single",
+    "relevant_sources": ["tutorial__cors"],
+    "note": "identifier style"
+  },
+  {
+    "id": "id-03",
+    "query": "OAuth2PasswordRequestForm",
+    "style": "identifier",
+    "type": "single",
+    "relevant_sources": ["tutorial__security__simple-oauth2"],
+    "note": "identifier style"
+  },
+  {
+    "id": "id-04",
+    "query": "UploadFile File python-multipart",
+    "style": "identifier",
+    "type": "single",
+    "relevant_sources": ["tutorial__request-files"],
+    "note": "identifier style"
+  },
+  {
+    "id": "id-05",
+    "query": "jsonable_encoder",
+    "style": "identifier",
+    "type": "multi",
+    "relevant_sources": ["tutorial__encoder", "tutorial__body-updates", "tutorial__stream-json-lines"],
+    "note": "jsonable_encoder appears in several docs; primary is encoder"
+  },
+  {
+    "id": "id-06",
+    "query": "StaticFiles mount",
+    "style": "identifier",
+    "type": "single",
+    "relevant_sources": ["tutorial__static-files"],
+    "note": "identifier style"
+  },
+
+  {
+    "id": "multi-01",
+    "query": "How do I implement secure user authentication end to end with OAuth2 and JWT, from login to a protected route?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": [
+      "tutorial__security__oauth2-jwt",
+      "tutorial__security__simple-oauth2",
+      "tutorial__security__get-current-user",
+      "tutorial__security__first-steps",
+      "tutorial__security__index"
+    ],
+    "note": "Full security flow spans the whole security/ section"
+  },
+  {
+    "id": "multi-02",
+    "query": "How do I set up basic OAuth2 Bearer authentication and then get the current logged-in user?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__security__first-steps", "tutorial__security__get-current-user"],
+    "note": "OAuth2PasswordBearer + get_current_user"
+  },
+  {
+    "id": "multi-03",
+    "query": "What is the difference between PUT and PATCH and how do I implement each?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__body-updates", "tutorial__body"],
+    "note": "Updates doc is primary; body explains the model"
+  },
+  {
+    "id": "multi-04",
+    "query": "How do I add validation constraints separately to path, query, and body parameters?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": [
+      "tutorial__path-params-numeric-validations",
+      "tutorial__query-params-str-validations",
+      "tutorial__body-fields"
+    ],
+    "note": "Path / Query / Field constraints"
+  },
+  {
+    "id": "multi-05",
+    "query": "How do I use Pydantic models to group query params, headers, cookies, and form fields?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": [
+      "tutorial__query-param-models",
+      "tutorial__header-param-models",
+      "tutorial__cookie-param-models",
+      "tutorial__request-form-models"
+    ],
+    "note": "The four '*-param-models' docs"
+  },
+  {
+    "id": "multi-06",
+    "query": "How do I stream data to clients incrementally?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__server-sent-events", "tutorial__stream-json-lines"],
+    "note": "SSE and JSON Lines streaming"
+  },
+  {
+    "id": "multi-07",
+    "query": "How do I keep separate input and output models so I never leak the password field?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__extra-models", "tutorial__response-model"],
+    "note": "model design + response_model filtering"
+  },
+  {
+    "id": "multi-08",
+    "query": "How does FastAPI's dependency injection work across functions, classes, sub-dependencies, yield cleanup, and global scope?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": [
+      "tutorial__dependencies__index",
+      "tutorial__dependencies__classes-as-dependencies",
+      "tutorial__dependencies__sub-dependencies",
+      "tutorial__dependencies__dependencies-with-yield",
+      "tutorial__dependencies__global-dependencies",
+      "tutorial__dependencies__dependencies-in-path-operation-decorators"
+    ],
+    "note": "Whole dependencies/ section"
+  },
+  {
+    "id": "multi-09",
+    "query": "How do I upload a file together with extra form fields in one request?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": [
+      "tutorial__request-forms-and-files",
+      "tutorial__request-files",
+      "tutorial__request-forms"
+    ],
+    "note": "Combined File + Form"
+  },
+  {
+    "id": "multi-10",
+    "query": "How do I set custom HTTP status codes for my CRUD endpoints and document them?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__response-status-code", "tutorial__path-operation-configuration"],
+    "note": "status_code parameter + operation config"
+  },
+  {
+    "id": "multi-11",
+    "query": "How do I configure CORS and add custom middleware to my app?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__cors", "tutorial__middleware"],
+    "note": "CORSMiddleware is a middleware; both relevant"
+  },
+  {
+    "id": "multi-12",
+    "query": "How do I handle errors and return the right HTTP status codes?",
+    "style": "natural",
+    "type": "multi",
+    "relevant_sources": ["tutorial__handling-errors", "tutorial__response-status-code"],
+    "note": "HTTPException + status codes"
+  },
+
+  {
+    "id": "abstain-01",
+    "query": "How do I deploy my FastAPI app to Kubernetes with a Helm chart?",
+    "style": "natural",
+    "type": "abstain",
+    "relevant_sources": [],
+    "note": "Deployment is NOT in this tutorial subset; bot should abstain ('I don't know')"
+  },
+  {
+    "id": "abstain-02",
+    "query": "How do I add WebSocket support for a real-time bidirectional chat?",
+    "style": "natural",
+    "type": "abstain",
+    "relevant_sources": [],
+    "note": "No WebSockets doc in this corpus; SSE/JSONL stream are one-way only"
+  },
+  {
+    "id": "abstain-03",
+    "query": "How do I connect FastAPI to MongoDB using Motor?",
+    "style": "natural",
+    "type": "abstain",
+    "relevant_sources": [],
+    "note": "Only SQLModel/SQL is covered; no NoSQL/Mongo doc"
+  },
+  {
+    "id": "abstain-04",
+    "query": "What is the cheapest OpenRouter model and how do I set a credit limit?",
+    "style": "natural",
+    "type": "abstain",
+    "relevant_sources": [],
+    "note": "Out of domain entirely (about the RAG infra, not FastAPI docs)"
+  }
+]

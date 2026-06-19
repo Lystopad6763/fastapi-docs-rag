@@ -1,17 +1,18 @@
-"""Eval-харнес: dense vs hybrid — ЗАГАЛОМ і ПО СТИЛЯХ запиту.
+"""Evaluation harness: dense vs hybrid retrieval — overall and per query style.
 
-Сенс: реальні юзери питають по-різному (natural / keyword / identifier). Per-style
-розбивка показує, ДЕ саме hybrid (BM25) виграє, а де достатньо dense.
+Real users phrase queries differently (natural / keyword / identifier). The per-style
+breakdown shows exactly where hybrid (BM25) wins and where dense alone is enough.
 
-Конфіги:
-  dense              — лише cosine (baseline)
-  hybrid_okapi       — BM25Okapi + dense, RRF (з L9)
-  hybrid_plus        — BM25Plus + dense, RRF
-  hybrid_w(dense2)   — BM25Okapi + dense, зважений RRF (dense×2)
+Configurations:
+  dense              — cosine only (baseline)
+  hybrid_okapi       — BM25Okapi + dense, fused with RRF
+  hybrid_plus        — BM25Plus + dense, fused with RRF
+  hybrid_w(dense2)   — BM25Okapi + dense, weighted RRF (dense weighted x2)
 
-Запуск:  python eval/evaluate.py
+Run:  python eval/evaluate.py
 """
 from __future__ import annotations
+import argparse
 import json
 import pathlib
 import re
@@ -34,13 +35,13 @@ HERE = pathlib.Path(__file__).parent
 
 
 def _tok(s: str) -> list[str]:
-    """Токенізація для BM25: відриває пунктуацію/дужки/backticks, лишає код-ідентифікатори.
+    """Tokenizer for BM25: strips punctuation/brackets/backticks while keeping code identifiers.
     'UploadFile(' / '`UploadFile`' / 'status_code=201' -> ['uploadfile'] / ['status_code','201']."""
     return re.findall(r"[a-z0-9_]+", s.lower())
 
 
-def load_corpus():
-    points, _ = get_client().scroll(settings.chunks_collection, limit=2000,
+def load_corpus(collection: str | None = None):
+    points, _ = get_client().scroll(collection or settings.chunks_collection, limit=2000,
                                     with_payload=True, with_vectors=True)
     ids = [p.payload["chunk_id"] for p in points]
     srcs = [p.payload["source"] for p in points]
@@ -90,16 +91,17 @@ def metrics(pairs, id_to_src) -> dict:
     return out
 
 
-def main() -> None:
-    dataset = json.loads((HERE / "dataset.json").read_text(encoding="utf-8"))
-    ids, srcs, texts, vecs = load_corpus()
+def main(collection: str | None = None, dataset_path: str | None = None) -> None:
+    ds_file = pathlib.Path(dataset_path) if dataset_path else HERE / "dataset.json"
+    dataset = json.loads(ds_file.read_text(encoding="utf-8"))
+    ids, srcs, texts, vecs = load_corpus(collection)
     id_to_src = dict(zip(ids, srcs))
     bm25o = BM25Okapi([_tok(t) for t in texts])
     bm25p = BM25Plus([_tok(t) for t in texts])
     queries = [ex["query"] for ex in dataset]
     styles = [ex["style"] for ex in dataset]
-    print(f"Корпус: {len(ids)} чанків | Датасет: {len(dataset)} запитів "
-          f"({len(set(styles))} стилі)\n")
+    print(f"Collection: {collection or settings.chunks_collection} | {len(ids)} chunks | "
+          f"Dataset: {len(dataset)} queries ({len(set(styles))} styles)\n")
 
     qv = [np.array(v, dtype=np.float32) for v in embed_texts(queries)]
 
@@ -110,7 +112,7 @@ def main() -> None:
         "hybrid_w(dense2)": [hybrid_search(v, t, bm25o, vecs, ids, dense_w=2.0) for v, t in zip(qv, queries)],
     }
 
-    # --- ЗАГАЛОМ ---
+    # --- Overall ---
     cols = ["recall@1", "recall@3", "recall@5", "src_recall@3", "mrr"]
     print("=== OVERALL ===")
     print(f"{'method':<18}" + "".join(f"{c:>14}" for c in cols))
@@ -119,9 +121,9 @@ def main() -> None:
         m = metrics(list(zip(results, dataset)), id_to_src)
         print(f"{name:<18}" + "".join(f"{m[c]:>14}" for c in cols))
 
-    # --- ПО СТИЛЯХ (mrr) ---
+    # --- Per style (MRR) ---
     uniq_styles = sorted(set(styles))
-    print("\n=== MRR BY STYLE (де hybrid виграє?) ===")
+    print("\n=== MRR BY STYLE (where does hybrid win?) ===")
     print(f"{'style':<12}" + "".join(f"{n:>18}" for n in methods))
     print("-" * (12 + 18 * len(methods)))
     for st in uniq_styles:
@@ -133,4 +135,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description="Retrieval eval: dense vs hybrid.")
+    ap.add_argument("--collection", default=None,
+                    help=f"Qdrant collection (default: {settings.chunks_collection})")
+    ap.add_argument("--dataset", default=None,
+                    help="path to a custom .json dataset (default: eval/dataset.json)")
+    args = ap.parse_args()
+    main(args.collection, args.dataset)

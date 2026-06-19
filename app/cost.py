@@ -1,4 +1,4 @@
-"""Cost tracking у SQLite: лог кожного запиту + агрегації для /usage/*."""
+"""Cost tracking in SQLite: a log row per request plus aggregations for /usage/*."""
 from __future__ import annotations
 import pathlib
 import sqlite3
@@ -16,9 +16,10 @@ CREATE TABLE IF NOT EXISTS request_costs (
     cost_usd      REAL,
     latency_ms    REAL,
     ttft_ms       REAL,
-    cache_hit     INTEGER,
-    fallback_used INTEGER,
-    created_at    TEXT DEFAULT (datetime('now'))
+    cache_hit       INTEGER,
+    fallback_used   INTEGER,
+    output_filtered INTEGER DEFAULT 0,
+    created_at      TEXT DEFAULT (datetime('now'))
 );
 """
 
@@ -33,22 +34,31 @@ def _conn() -> sqlite3.Connection:
 def init_db() -> None:
     with _conn() as c:
         c.execute(_DDL)
+        # migration: add output_filtered to a pre-existing table
+        cols = [r[1] for r in c.execute("PRAGMA table_info(request_costs)")]
+        if "output_filtered" not in cols:
+            c.execute("ALTER TABLE request_costs ADD COLUMN output_filtered INTEGER DEFAULT 0")
 
 
 def log_request(request_id: str, api_key: str, model: str,
                 input_tokens: int, output_tokens: int,
                 latency_ms: float, ttft_ms: float,
-                cache_hit: bool = False, fallback_used: bool = False) -> float:
-    """Записати рядок витрат, повернути вартість запиту."""
-    cost = chat_cost_usd(model, input_tokens, output_tokens)
+                cache_hit: bool = False, fallback_used: bool = False,
+                cost_usd: float | None = None, output_filtered: bool = False) -> float:
+    """Insert a cost row and return the request cost.
+
+    cost_usd != None -> authoritative cost from the provider (OpenRouter usage.cost);
+    otherwise compute it from PRICING (fallback when the provider did not return a cost).
+    """
+    cost = cost_usd if cost_usd is not None else chat_cost_usd(model, input_tokens, output_tokens)
     with _conn() as c:
         c.execute(
             "INSERT OR REPLACE INTO request_costs "
             "(request_id, api_key, model, input_tokens, output_tokens, cost_usd, "
-            " latency_ms, ttft_ms, cache_hit, fallback_used) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            " latency_ms, ttft_ms, cache_hit, fallback_used, output_filtered) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (request_id, api_key, model, input_tokens, output_tokens, cost,
-             latency_ms, ttft_ms, int(cache_hit), int(fallback_used)),
+             latency_ms, ttft_ms, int(cache_hit), int(fallback_used), int(output_filtered)),
         )
     return cost
 

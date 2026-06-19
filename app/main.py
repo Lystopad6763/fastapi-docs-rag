@@ -56,16 +56,30 @@ async def chat_stream(req: ChatRequest, request: Request, auth: dict = Depends(r
         trace = obs.start_trace("chat/stream", input={"message": req.message},
                                 metadata={"api_key": auth["key"], "tier": auth.get("tier", "")})
         try:
-            # ONE embedding -> used for both cache and retrieval (avoids calling the embedder twice)
-            es = trace.start_observation(name="embed", as_type="span")
-            qv = await asyncio.to_thread(embed_query, req.message)
-            es.end()
+            # --- L1 exact-match cache (checked BEFORE embedding) ---
+            # A repeated identical question is served from memory without the remote
+            # embedding call (~1-3s), which is the floor on semantic-cache latency.
+            cached = await asyncio.to_thread(cache.exact_lookup, req.message)
+            cache_tier = "exact" if cached is not None else None
 
-            # --- Semantic cache lookup ---
-            cs = trace.start_observation(name="cache_lookup", as_type="span")
-            cached = await asyncio.to_thread(cache.lookup, qv)
-            cs.update(metadata={"hit": cached is not None})
-            cs.end()
+            if cached is None:
+                # ONE embedding -> reused for both the semantic cache and retrieval.
+                es = trace.start_observation(name="embed", as_type="span")
+                qv = await asyncio.to_thread(embed_query, req.message)
+                es.end()
+
+                # --- L2 semantic cache lookup (catches paraphrases L1 misses) ---
+                cs = trace.start_observation(name="cache_lookup", as_type="span")
+                cached = await asyncio.to_thread(cache.lookup, qv)
+                cs.update(metadata={"hit": cached is not None})
+                cs.end()
+                if cached is not None:
+                    cache_tier = "semantic"
+                    # promote to L1 so the next identical query skips embedding
+                    await asyncio.to_thread(cache.exact_store, req.message,
+                                            cached["response"], cached.get("sources", []),
+                                            cached.get("model", ""))
+
             if cached is not None:
                 for piece in _stream_text(cached["response"]):
                     if await request.is_disconnected():
@@ -81,7 +95,8 @@ async def chat_stream(req: ChatRequest, request: Request, auth: dict = Depends(r
                     latency_ms=latency_ms, ttft_ms=ttft_ms or latency_ms,
                     cache_hit=True, fallback_used=False,
                 )
-                trace.update(output=cached["response"], metadata={"cache_hit": True})
+                trace.update(output=cached["response"],
+                             metadata={"cache_hit": True, "cache_tier": cache_tier})
                 yield _sse({
                     "type": "done", "sources": cached.get("sources", []),
                     "usage": {"input_tokens": 0, "output_tokens": 0},
@@ -124,6 +139,7 @@ async def chat_stream(req: ChatRequest, request: Request, auth: dict = Depends(r
                        metadata={"fallback_used": stats.get("fallback_used", False)})
             gen.end()
             await asyncio.to_thread(cache.store, qv, req.message, answer, sources, stats.get("model", ""))
+            cache.exact_store(req.message, answer, sources, stats.get("model", ""))  # warm L1 too
 
             # cost + rate limiting
             latency_ms = (time.perf_counter() - t0) * 1000
@@ -172,3 +188,12 @@ async def index_rebuild(auth: dict = Depends(require_api_key)):
     if auth.get("tier") != "enterprise":
         raise HTTPException(status_code=403, detail="Admin only: requires enterprise tier")
     return await asyncio.to_thread(rebuild_index)
+
+
+@app.post("/cache/flush")
+async def cache_flush(auth: dict = Depends(require_api_key)):
+    """Admin: invalidate both cache tiers (L1 in-memory + L2 semantic). Enterprise only."""
+    if auth.get("tier") != "enterprise":
+        raise HTTPException(status_code=403, detail="Admin only: requires enterprise tier")
+    await asyncio.to_thread(cache.flush)
+    return {"status": "flushed"}

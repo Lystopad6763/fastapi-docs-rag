@@ -1,8 +1,8 @@
-"""Qdrant — векторне сховище: HNSW-індекс + метрика cosine.
+"""Qdrant vector store: HNSW index with cosine metric.
 
-Колекція зберігає вектор кожного чанка + payload (текст, source, heading).
-HNSW і cosine — дефолт Qdrant; на нашому масштабі (~сотні векторів) навіть
-Flat був би миттєвим, але HNSW нічого не коштує (index у RAM, payload на диску).
+Each collection stores one vector per chunk plus its payload (text, source, heading).
+HNSW and cosine are Qdrant's defaults; at our scale (~hundreds of vectors) even a flat
+index would be instant, but HNSW costs nothing here (index in RAM, payload on disk).
 """
 from __future__ import annotations
 from qdrant_client import QdrantClient
@@ -32,7 +32,7 @@ def upsert_chunks(client: QdrantClient, name: str,
 
 
 def search(client: QdrantClient, name: str, query_vector: list[float], top_k: int):
-    """Повертає список точок (.id, .score, .payload), відсортований за similarity."""
+    """Return a list of points (.id, .score, .payload) sorted by similarity."""
     return client.query_points(
         collection_name=name, query=query_vector, limit=top_k, with_payload=True
     ).points

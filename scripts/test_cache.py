@@ -1,9 +1,9 @@
-"""Тест semantic cache (§5): MISS -> HIT (той самий + перефраз), порівняння latency.
+"""Semantic cache test: MISS -> HIT (same query + paraphrase), with latency comparison.
 
-На старті чистить колекцію кешу -> відтворюваний MISS на #1.
-Передумова: піднятий uvicorn.
+Clears the cache collection at startup so request #1 is a reproducible MISS.
+Prerequisite: uvicorn running.
 
-Запуск:  python scripts/test_cache.py
+Run:  python scripts/test_cache.py
 """
 from __future__ import annotations
 import json
@@ -17,7 +17,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from app.config import settings   # noqa: E402
 from app import cache             # noqa: E402
 
-# свіжий кеш для чистого MISS на #1
+# fresh cache for a clean MISS on request #1
 if cache._client.collection_exists(settings.cache_collection):
     cache._client.delete_collection(settings.cache_collection)
 cache.ensure_cache_collection()
@@ -45,11 +45,11 @@ def ask(q: str) -> tuple[float, object]:
 def main() -> None:
     q1 = "How do I declare an optional query parameter in FastAPI?"
     q2 = "Explain how to make a query parameter optional in FastAPI"
-    t1, c1 = ask(q1); print(f"#1 (новий запит)   {t1:6.2f}s  cache_hit={c1}")
-    t2, c2 = ask(q1); print(f"#2 (той самий)     {t2:6.2f}s  cache_hit={c2}")
-    t3, c3 = ask(q2); print(f"#3 (перефраз)      {t3:6.2f}s  cache_hit={c3}")
+    t1, c1 = ask(q1); print(f"#1 (new query)     {t1:6.2f}s  cache_hit={c1}")
+    t2, c2 = ask(q1); print(f"#2 (same)          {t2:6.2f}s  cache_hit={c2}")
+    t3, c3 = ask(q2); print(f"#3 (paraphrase)    {t3:6.2f}s  cache_hit={c3}")
     if t2 > 0:
-        print(f"\nПрискорення HIT vs MISS: {t1 / t2:.1f}x  (ДЗ очікує >=5x)")
+        print(f"\nSpeedup HIT vs MISS: {t1 / t2:.1f}x  (expected >=5x)")
 
 
 if __name__ == "__main__":

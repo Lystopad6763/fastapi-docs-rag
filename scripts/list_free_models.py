@@ -1,6 +1,6 @@
-"""Вивести АКТУАЛЬНІ безкоштовні моделі OpenRouter (pricing = $0). Ключ не потрібен.
+"""List the currently free OpenRouter models (pricing = $0). No API key required.
 
-Запуск:  python scripts/list_free_models.py
+Run:  python scripts/list_free_models.py
 """
 from __future__ import annotations
 import json
@@ -19,4 +19,4 @@ for m in data.get("data", []):
 
 for mid in sorted(free):
     print(mid)
-print(f"\nВсього безкоштовних моделей: {len(free)}")
+print(f"\nTotal free models: {len(free)}")

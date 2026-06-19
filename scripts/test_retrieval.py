@@ -1,10 +1,10 @@
-"""Тест retrieval на РЕАЛЬНОМУ індексі (Qdrant).
+"""Retrieval test against the REAL index (Qdrant).
 
-Ембедить кілька реальних питань і показує top-3 знайдені чанки (heading + score).
-Це справжній показник якості пошуку — на відміну від іграшкових речень.
+Embeds a handful of realistic questions and prints the top-3 retrieved chunks
+(heading + score). Unlike toy sentences, this reflects real search quality.
 
-Запуск:  python scripts/test_retrieval.py
-Передумова: виконаний scripts/index.py (колекція docs_chunks непорожня).
+Run:  python scripts/test_retrieval.py
+Prerequisites: scripts/index.py already run (docs_chunks collection is non-empty).
 """
 from __future__ import annotations
 import pathlib
@@ -22,7 +22,7 @@ QUERIES = [
     "How do I use dependency injection with Depends?",
     "How to set a custom HTTP status code for a response?",
     "How to upload a file in FastAPI?",
-    "Annotated Query max_length validation",       # точний термін — перевірка слабкого місця
+    "Annotated Query max_length validation",       # exact term — probes a known weak spot
 ]
 
 

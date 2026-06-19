@@ -1,12 +1,12 @@
-"""LLM-клієнт через OpenRouter з fallback-ланцюжком + circuit breaker.
+"""LLM client over OpenRouter with a fallback chain and a circuit breaker.
 
-stream_chat пробує моделі по черзі:
-  - timeout 15с на ВСТАНОВЛЕННЯ стріму (не на всю генерацію — стрім стартує швидко);
-  - retryable помилка (timeout / network / 429 / 5xx / невалідна модель) -> наступна модель;
-  - non-retryable (401/403/422) -> віддаємо клієнту, без fallback;
-  - circuit breaker: 5+ помилок моделі за 60с -> 60с її пропускаємо.
+stream_chat tries models in order:
+  - 15s timeout on ESTABLISHING the stream (not on full generation — streams start fast);
+  - a retryable error (timeout / network / 429 / 5xx / invalid model) -> try the next model;
+  - a non-retryable error (401/403/422) -> propagate to the client, no fallback;
+  - circuit breaker: 5+ failures for a model within 60s -> skip it for 60s.
 
-У stats кладе реально використану model + fallback_used + input/output tokens.
+`stats` is populated with the model actually used + fallback_used + input/output tokens.
 """
 from __future__ import annotations
 import asyncio
@@ -23,12 +23,12 @@ _client = AsyncOpenAI(
 )
 _enc = tiktoken.get_encoding("cl100k_base")
 
-# 401/403/422 — справді клієнтські помилки -> НЕ fallback. (400/404 від OpenRouter на
-# невалідну модель трактуємо як retryable, щоб fallback спрацьовував саме на невалідну модель.)
+# 401/403/422 are genuine client errors -> NO fallback. (400/404 from OpenRouter for an
+# invalid model are treated as retryable so that fallback kicks in precisely on a bad model.)
 NON_RETRYABLE = {401, 403, 422}
-CB_THRESHOLD = 5          # помилок моделі за вікно -> розмикаємо коло
+CB_THRESHOLD = 5          # failures per window -> open the circuit
 CB_WINDOW = 60
-_failures: dict[str, list[float]] = {}    # model -> час останніх помилок
+_failures: dict[str, list[float]] = {}    # model -> timestamps of recent failures
 
 
 def _count_messages(messages: list[dict]) -> int:
@@ -36,7 +36,7 @@ def _count_messages(messages: list[dict]) -> int:
 
 
 def _circuit_open(model: str) -> bool:
-    """True, якщо модель набрала >= CB_THRESHOLD помилок за останні CB_WINDOW секунд."""
+    """True if the model has accumulated >= CB_THRESHOLD failures in the last CB_WINDOW seconds."""
     now = time.time()
     fails = [t for t in _failures.get(model, []) if now - t < CB_WINDOW]
     _failures[model] = fails
@@ -57,7 +57,7 @@ async def stream_chat(messages: list[dict], models: list[str] | str | None = Non
     last_err: Exception | None = None
     for i, model in enumerate(models):
         if _circuit_open(model):
-            continue                          # circuit breaker: модель тимчасово пропускаємо
+            continue                          # circuit breaker: temporarily skip this model
 
         try:
             stream = await asyncio.wait_for(
@@ -73,13 +73,13 @@ async def stream_chat(messages: list[dict], models: list[str] | str | None = Non
             _record_failure(model); last_err = e; continue
         except APIStatusError as e:
             if e.status_code in NON_RETRYABLE:
-                raise                         # 401/403/422 -> віддаємо клієнту
+                raise                         # 401/403/422 -> propagate to the client
             _record_failure(model); last_err = e; continue
 
-        # успіх -> комітимось у цю модель і стрімимо
+        # success -> commit to this model and stream
         if stats is not None:
             stats["model"] = model
-            stats["fallback_used"] = i > 0    # не primary -> fallback спрацював
+            stats["fallback_used"] = i > 0    # not the primary -> a fallback was used
         parts: list[str] = []
         usage = None
         async for chunk in stream:
@@ -95,9 +95,11 @@ async def stream_chat(messages: list[dict], models: list[str] | str | None = Non
             if usage:
                 stats["input_tokens"] = usage.prompt_tokens
                 stats["output_tokens"] = usage.completion_tokens
+                # OpenRouter reports the ACTUAL charged cost -> more authoritative than our PRICING
+                stats["cost_usd_api"] = getattr(usage, "cost", None)
             else:
                 stats["input_tokens"] = _count_messages(messages)
                 stats["output_tokens"] = len(_enc.encode("".join(parts)))
-        return                                # успішно відстрімили -> виходимо
+        return                                # streamed successfully -> done
 
-    raise last_err or RuntimeError("Усі моделі ланцюжка недоступні")
+    raise last_err or RuntimeError("All models in the chain are unavailable")

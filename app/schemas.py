@@ -2,5 +2,5 @@ from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
-    """Тіло запиту /chat/stream. Це Q&A-бот (без історії) — лише одне питання."""
-    message: str = Field(..., min_length=1, description="Питання про FastAPI-документацію")
+    """Request body for /chat/stream. This is a stateless Q&A bot (no history) — a single question."""
+    message: str = Field(..., min_length=1, description="Question about the FastAPI documentation")

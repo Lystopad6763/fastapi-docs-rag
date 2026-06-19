@@ -1,6 +1,6 @@
-"""Показати, який grounded-промпт rag.py збирає для LLM (без виклику LLM).
+"""Show the grounded prompt that rag.py builds for the LLM (without calling the LLM).
 
-Запуск:  python scripts/test_rag.py
+Run:  python scripts/test_rag.py
 """
 from __future__ import annotations
 import pathlib
@@ -18,13 +18,13 @@ def main() -> None:
     context, sources = build_context(hits)
     messages = build_messages(QUERY, context)
 
-    print("SOURCES (підуть у done-event):", sources)
+    print("SOURCES (will go into the done-event):", sources)
     print("=" * 72)
     print("SYSTEM PROMPT:\n" + messages[0]["content"])
     print("=" * 72)
     user = messages[1]["content"]
-    print(f"USER MESSAGE (перші 1400 з {len(user)} символів):\n")
-    print(user[:1400] + ("\n... [обрізано]" if len(user) > 1400 else ""))
+    print(f"USER MESSAGE (first 1400 of {len(user)} characters):\n")
+    print(user[:1400] + ("\n... [truncated]" if len(user) > 1400 else ""))
 
 
 if __name__ == "__main__":

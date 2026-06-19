@@ -1,8 +1,8 @@
-"""Перша реальна RAG-відповідь у терміналі: retrieve -> grounded prompt -> LLM stream.
+"""End-to-end RAG answer in the terminal: retrieve -> grounded prompt -> LLM stream.
 
-Запуск:  python scripts/ask.py "How do I upload a file in FastAPI?"
-         python scripts/ask.py            (бере дефолтне питання)
-Передумова: OPENROUTER_API_KEY у .env, виконаний index.py.
+Run:  python scripts/ask.py "How do I upload a file in FastAPI?"
+      python scripts/ask.py            (uses the default question)
+Prerequisites: OPENROUTER_API_KEY in .env and index.py already run.
 """
 from __future__ import annotations
 import asyncio

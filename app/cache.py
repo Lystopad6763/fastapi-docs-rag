@@ -1,10 +1,10 @@
-"""Semantic cache у Qdrant.
+"""Semantic cache backed by Qdrant.
 
-Ключове:
-  - той самий embedding, що для RAG (передається ззовні — НЕ ембедимо двічі);
-  - окрема колекція `semantic_cache`; HIT, якщо cosine-схожість > threshold (0.90);
-  - TTL 1 год через payload-поле `expire_at` (Qdrant не має вбудованого TTL);
-  - кеш ГЛОБАЛЬНИЙ для документа (public Q&A bot — усі ключі бачать один кеш).
+Key points:
+  - reuses the same embedding as RAG (passed in from outside — we do NOT embed twice);
+  - a separate `semantic_cache` collection; a HIT requires cosine similarity > threshold (0.90);
+  - a 1-hour TTL via the payload field `expire_at` (Qdrant has no built-in TTL);
+  - the cache is GLOBAL for the document set (a public Q&A bot — all keys share one cache).
 """
 from __future__ import annotations
 import time
@@ -26,7 +26,7 @@ def ensure_cache_collection() -> None:
 
 
 def lookup(query_vector: list[float]) -> dict | None:
-    """Повернути payload кешу, якщо є близький НЕ протухлий запит; інакше None."""
+    """Return the cached payload if a close, non-expired query exists; otherwise None."""
     points = _client.query_points(
         collection_name=settings.cache_collection,
         query=query_vector, limit=1, with_payload=True,
@@ -34,9 +34,9 @@ def lookup(query_vector: list[float]) -> dict | None:
     if not points:
         return None
     hit = points[0]
-    if hit.score < settings.cache_threshold:          # не досить схоже
+    if hit.score < settings.cache_threshold:          # not similar enough
         return None
-    if hit.payload.get("expire_at", 0) < time.time():  # протухло (TTL)
+    if hit.payload.get("expire_at", 0) < time.time():  # expired (TTL)
         return None
     return hit.payload
 

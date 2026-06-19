@@ -1,11 +1,11 @@
-"""Token-based rate limiting у Redis.
+"""Token-based rate limiting in Redis.
 
-Фіксоване 60-секундне вікно per API key. Лічильник = РЕАЛЬНО витрачені токени
-(input+output), а не кількість запитів. Реалізація через INCR + EXPIRE
-(портативно, без Lua — як радить ДЗ для Upstash).
+A fixed 60-second window per API key. The counter tracks ACTUAL tokens consumed
+(input+output), not the number of requests. Implemented with INCR + EXPIRE
+(portable, no Lua — works with managed Redis such as Upstash).
 
-Логіка: ПЕРЕД запитом перевіряємо, чи ключ уже не вичерпав бюджет (check);
-ПІСЛЯ відповіді списуємо реальні токени (record_usage).
+Flow: BEFORE a request, check whether the key has already exhausted its budget (check);
+AFTER the response, charge the real token count (record_usage).
 """
 from __future__ import annotations
 import redis.asyncio as redis
@@ -21,7 +21,7 @@ def _key(api_key: str) -> str:
 
 
 async def check_rate_limit(api_key: str, budget: int) -> None:
-    """429 + Retry-After, якщо ключ уже вичерпав бюджет токенів у поточному вікні."""
+    """Raise 429 + Retry-After if the key has already exhausted its token budget in the current window."""
     k = _key(api_key)
     used = int(await _r.get(k) or 0)
     if used >= budget:
@@ -35,8 +35,8 @@ async def check_rate_limit(api_key: str, budget: int) -> None:
 
 
 async def record_usage(api_key: str, tokens: int) -> None:
-    """Списати реально витрачені токени; на першому списанні почати 60с вікно."""
+    """Charge the actual tokens consumed; on the first charge, start the 60s window."""
     k = _key(api_key)
     await _r.incrby(k, tokens)
-    if await _r.ttl(k) < 0:            # -1 = ключ без TTL -> виставляємо вікно
+    if await _r.ttl(k) < 0:            # -1 = key has no TTL -> set the window
         await _r.expire(k, WINDOW_SECONDS)

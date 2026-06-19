@@ -1,12 +1,13 @@
-"""Завантаження корпусу.
+"""Build the documentation corpus.
 
-Качає всі .md з FastAPI docs/en/docs/tutorial/ і робить їх САМОДОСТАТНІМИ:
-  1) резолвить include-директиви `{* ../../docs_src/....py *}` -> вшиває реальний код;
-  2) чистить MkDocs-адмонішени (`/// tip ... ///`) у звичайний текст;
-  3) пише результат у data/docs/ (по одному .md на секцію tutorial).
+Downloads every .md file from the FastAPI docs/en/docs/tutorial/ directory and
+makes each one self-contained:
+  1) resolves include directives `{* ../../docs_src/....py *}` by inlining the
+     referenced source code;
+  2) flattens MkDocs admonitions (`/// tip ... ///`) into plain text;
+  3) writes the result to data/docs/ (one .md file per tutorial section).
 
-
-Запуск:  python scripts/fetch_docs.py
+Run:  python scripts/fetch_docs.py
 """
 from __future__ import annotations
 import json
@@ -16,7 +17,7 @@ import urllib.request
 
 REPO = "fastapi/fastapi"
 BRANCH = "master"
-DOC_PREFIX = "docs/en/docs/tutorial/"     # яку теку качаємо (рекурсивно)
+DOC_PREFIX = "docs/en/docs/tutorial/"     # directory to download (recursively)
 DOC_ROOT = "docs/en/docs/"
 OUT_DIR = pathlib.Path("data/docs")
 RAW = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/"
@@ -39,7 +40,7 @@ def resolve_includes(md: str, cache: dict[str, str | None]) -> tuple[str, int, i
     def repl(m: re.Match) -> str:
         nonlocal ok, fail
         path = m.group(1).strip()
-        i = path.find("docs_src/")              # робастно проти ../../ префіксів
+        i = path.find("docs_src/")              # robust against ../../ prefixes
         rel = path[i:] if i >= 0 else path.lstrip("./")
         if rel not in cache:
             try:
@@ -49,7 +50,7 @@ def resolve_includes(md: str, cache: dict[str, str | None]) -> tuple[str, int, i
         code = cache[rel]
         if code is None:
             fail += 1
-            return f"\n```python\n# (приклад коду {rel} недоступний)\n```\n"
+            return f"\n```python\n# (code example {rel} unavailable)\n```\n"
         ok += 1
         return f"\n```python\n{code.rstrip()}\n```\n"
 
@@ -85,7 +86,7 @@ def main() -> None:
         n["path"] for n in tree
         if n["type"] == "blob" and n["path"].startswith(DOC_PREFIX) and n["path"].endswith(".md")
     )
-    print(f"Знайдено {len(md_paths)} markdown-файлів у {DOC_PREFIX}")
+    print(f"Found {len(md_paths)} markdown files in {DOC_PREFIX}")
 
     code_cache: dict[str, str | None] = {}
     inc_ok = inc_fail = 0
@@ -97,17 +98,17 @@ def main() -> None:
         (OUT_DIR / flat).write_text(md, encoding="utf-8")
         inc_ok += ok
         inc_fail += fail
-    print(f"Вшито код-інклудів: {inc_ok} ok, {inc_fail} fail ({len(code_cache)} унікальних .py)")
-    print(f"Записано {len(md_paths)} самодостатніх файлів -> {OUT_DIR}/")
+    print(f"Inlined code includes: {inc_ok} ok, {inc_fail} fail ({len(code_cache)} unique .py)")
+    print(f"Wrote {len(md_paths)} self-contained files -> {OUT_DIR}/")
 
     try:
         import tiktoken
         enc = tiktoken.get_encoding("cl100k_base")
         total = sum(len(enc.encode((OUT_DIR / f.name).read_text(encoding="utf-8")))
                     for f in OUT_DIR.glob("*.md"))
-        print(f"Корпус: {total:,} токенів")
+        print(f"Corpus: {total:,} tokens")
     except Exception as e:  # noqa: BLE001
-        print("tiktoken-підрахунок пропущено:", e)
+        print("tiktoken count skipped:", e)
 
 
 if __name__ == "__main__":

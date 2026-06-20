@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 import time
 import uuid
@@ -20,6 +21,8 @@ from app.ratelimit import check_rate_limit, record_usage
 from app.security import check_input, filter_output
 from app import observability as obs
 
+logger = logging.getLogger("app")
+
 app = FastAPI(title="Q&A FastAPI-docs Assistant", version="0.1.0")
 init_db()                        # costs table
 cache.ensure_cache_collection()  # semantic_cache collection
@@ -36,6 +39,24 @@ def _sse(event: dict) -> str:
 def _stream_text(text: str) -> list[str]:
     """Split a ready-made text into small pieces so a cached answer can be streamed."""
     return re.findall(r"\S+\s*|\s+", text)
+
+
+@app.get("/")
+async def root():
+    """Friendly landing so an opened URL shows what the service is and how to call it."""
+    return {
+        "service": "fastapi-docs-rag",
+        "description": "Q&A RAG API over the FastAPI documentation",
+        "docs": "/docs",
+        "health": "/health",
+        "example": {
+            "method": "POST",
+            "path": "/chat/stream",
+            "headers": {"X-API-Key": "demo-pro"},
+            "body": {"message": "How do I upload a file in FastAPI?"},
+        },
+        "source": "https://github.com/Lystopad6763/fastapi-docs-rag",
+    }
 
 
 @app.get("/health")
@@ -160,8 +181,11 @@ async def chat_stream(req: ChatRequest, request: Request, auth: dict = Depends(r
                 "usage": {"input_tokens": in_tok, "output_tokens": out_tok},
                 "cost_usd": round(cost, 6), "cache_hit": False,
             })
-        except Exception as e:                      # noqa: BLE001
-            yield _sse({"type": "error", "detail": str(e)})
+        except Exception:                           # noqa: BLE001
+            # Log the real error server-side; return a generic message so an upstream
+            # exception (which may embed a connection string) never reaches the client.
+            logger.exception("chat/stream failed")
+            yield _sse({"type": "error", "detail": "internal error while generating the answer"})
         finally:
             trace.end()
 

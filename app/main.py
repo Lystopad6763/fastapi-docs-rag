@@ -23,7 +23,23 @@ from app import observability as obs
 
 logger = logging.getLogger("app")
 
-app = FastAPI(title="Q&A FastAPI-docs Assistant", version="0.1.0")
+_DESCRIPTION = """
+A production RAG API that answers questions about the **FastAPI documentation**.
+
+**How to try it here:** click **Authorize** (top right), paste a demo key, then open
+`POST /chat/stream` → *Try it out* → send `{"message": "How do I upload a file in FastAPI?"}`.
+
+| Demo key | Tier | Budget |
+|---|---|---|
+| `demo-free` | free | 5,000 tokens/min |
+| `demo-pro` | pro | 20,000 tokens/min |
+| `demo-enterprise` | enterprise (admin) | 100,000 tokens/min |
+
+The response streams Server-Sent Events; the final `done` event carries the retrieved
+`sources`, token `usage`, `cost_usd`, and `cache_hit`.
+"""
+
+app = FastAPI(title="Q&A FastAPI-docs Assistant", version="0.1.0", description=_DESCRIPTION)
 init_db()                        # costs table
 cache.ensure_cache_collection()  # semantic_cache collection
 

@@ -4,7 +4,8 @@ Three hardcoded demo keys. Each tier defines:
   - tokens_per_min — the budget used for rate limiting,
   - models — the model chain (primary + fallbacks) tried in order.
 """
-from fastapi import Header, HTTPException
+from fastapi import HTTPException, Security
+from fastapi.security import APIKeyHeader
 
 API_KEYS: dict[str, dict] = {
     "demo-free": {
@@ -37,9 +38,14 @@ API_KEYS: dict[str, dict] = {
 }
 
 
-async def require_api_key(x_api_key: str = Header(default="")) -> dict:
+# Declaring the key as a security scheme (not a plain header) makes Swagger UI show an
+# "Authorize" button — so the API is testable from a browser with no curl/clone.
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def require_api_key(x_api_key: str = Security(_api_key_header)) -> dict:
     """FastAPI dependency: raises 401 if the key is missing or invalid."""
-    cfg = API_KEYS.get(x_api_key)
+    cfg = API_KEYS.get(x_api_key or "")
     if not cfg:
         raise HTTPException(status_code=401, detail="Missing or invalid X-API-Key")
     return {"key": x_api_key, **cfg}

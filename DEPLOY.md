@@ -15,8 +15,9 @@ Everything below is reproducible from a fresh machine. Free tiers are enough.
 2. Copy the **cluster URL** (looks like `https://xxxx.eu-central.aws.cloud.qdrant.io:6333`).
 3. Create an **API key** and copy it.
 
-You do not create collections by hand — the app creates `semantic_cache` on startup and
-`docs_chunks` when you run `/index/rebuild` (step 5).
+You do not create collections by hand — the app creates them automatically. Collection names
+are namespaced (`fastapi_docs_chunks`, `fastapi_semantic_cache`) via `[env]` in `fly.toml`, so
+a shared or reused Qdrant cluster never collides with other projects' collections.
 
 ## 2. Upstash Redis (rate limiting)
 
@@ -28,29 +29,31 @@ You do not create collections by hand — the app creates `semantic_cache` on st
 
 1. Install flyctl: https://fly.io/docs/flyctl/install/ and `fly auth signup` (a card is
    required for verification; the small machine we use fits the free allowance).
-2. From the project root, create the app without deploying yet:
+2. From the project root, create the app (it reuses the provided `fly.toml`):
 
    ```bash
-   fly launch --no-deploy
+   fly apps create fastapi-docs-rag --org personal   # pick a unique name; update fly.toml app= to match
    ```
 
-   Keep the provided `fly.toml`. Accept the app name (or let Fly generate one and update
-   `app = "..."` in `fly.toml`).
+3. Set the secrets (never commit these — they are injected at runtime). The quickest way is to
+   import them straight from your `.env` (flyctl never prints the values):
 
-3. Set the secrets (never commit these — they are injected at runtime):
+   ```bash
+   fly secrets import --stage < .env
+   ```
+
+   …or set them explicitly:
 
    ```bash
    fly secrets set \
-     OPENAI_API_KEY="sk-..." \
-     OPENROUTER_API_KEY="sk-or-..." \
-     QDRANT_URL="https://xxxx.eu-central.aws.cloud.qdrant.io:6333" \
-     QDRANT_API_KEY="<qdrant-cloud-key>" \
+     OPENAI_API_KEY="sk-..." OPENROUTER_API_KEY="sk-or-..." \
+     QDRANT_URL="https://xxxx.eu-central.aws.cloud.qdrant.io:6333" QDRANT_API_KEY="<key>" \
      REDIS_URL="rediss://default:<password>@<host>:6379" \
-     LANGFUSE_PUBLIC_KEY="pk-lf-..." \
-     LANGFUSE_SECRET_KEY="sk-lf-..."
+     LANGFUSE_PUBLIC_KEY="pk-lf-..." LANGFUSE_SECRET_KEY="sk-lf-..."
    ```
 
-   (Langfuse keys are optional — omit them to run without tracing.)
+   (Langfuse keys are optional — omit them to run without tracing. The non-secret collection
+   names live in `fly.toml`, not here.)
 
 4. Deploy:
 
@@ -65,8 +68,11 @@ Qdrant Cloud via the admin endpoint (enterprise key):
 
 ```bash
 curl -X POST https://<your-app>.fly.dev/index/rebuild -H "X-API-Key: demo-enterprise"
-# -> {"status":"ok","collection":"docs_chunks","documents":50,"chunks":509,"points":509}
+# -> {"status":"ok","collection":"fastapi_docs_chunks","documents":50,"chunks":509,"points":509}
 ```
+
+Alternatively, index from your machine before deploying — point `.env` at the cloud cluster and run
+`python scripts/index.py --collection fastapi_docs_chunks`. This also confirms cloud connectivity early.
 
 ## 5. Verify
 

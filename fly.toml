@@ -9,6 +9,13 @@ primary_region = "fra"        # Frankfurt — low latency to Central/Eastern Eur
 
 [build]
 
+# Non-secret config. Collection names are namespaced so this app never collides with
+# anything else living in the same Qdrant Cloud cluster. Secrets (API keys, QDRANT_URL,
+# REDIS_URL) are set with `fly secrets set` — never here.
+[env]
+  CHUNKS_COLLECTION = "fastapi_docs_chunks"
+  CACHE_COLLECTION = "fastapi_semantic_cache"
+
 [http_service]
   internal_port = 8000
   force_https = true

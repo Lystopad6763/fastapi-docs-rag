@@ -84,9 +84,11 @@ We built it layer by layer, validating each one. The order follows the dependenc
 | 16 | **Concurrency** (semaphore, disconnect, counters) | `app/main.py` | Concurrency | ✅ |
 | 17 | **Observability** (Langfuse v4) | `app/observability.py` | Observability | ✅ |
 | 18 | `/index/rebuild` (admin) | `app/indexer.py`, `app/main.py` | Admin | ✅ |
-| 19 | **Containerization:** multi-stage Docker + metrics | `Dockerfile`, `.dockerignore` | Docker | ⬜ |
+| 19 | **Containerization:** torch-free multi-stage image (~428MB) | `Dockerfile`, `.dockerignore` | Docker | ✅ |
+| 20 | **Public deployment** | `fly.toml`, `DEPLOY.md` | Deployment | ✅ |
 
-**10 of the 11 production capabilities are done, plus the eval section.** Remaining: public deployment and containerization.
+**All 11 production capabilities are done, plus the eval section.** The service is containerized
+(torch-free, ~428MB) and deployed at https://fastapi-docs-rag.fly.dev (Fly.io + Qdrant Cloud + Upstash Redis).
 
 ---
 

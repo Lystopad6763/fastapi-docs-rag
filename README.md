@@ -9,6 +9,38 @@ tracking, multi-provider fallback, prompt-injection defense, concurrency control
 
 ---
 
+## Live demo
+
+**Deployed:** https://fastapi-docs-rag.fly.dev  ·  Fly.io + Qdrant Cloud + Upstash Redis
+
+Open in a browser:
+- https://fastapi-docs-rag.fly.dev/health — liveness probe
+- https://fastapi-docs-rag.fly.dev/docs — interactive Swagger UI
+
+Try it from a terminal. Demo keys: `demo-free` (5K), `demo-pro` (20K), `demo-enterprise` (100K tokens/min):
+
+```bash
+# RAG answer streamed token-by-token, with sources + cost in the final event
+curl -N -X POST https://fastapi-docs-rag.fly.dev/chat/stream \
+  -H "X-API-Key: demo-pro" -H "Content-Type: application/json" \
+  -d '{"message":"How do I upload a file in FastAPI?"}'
+
+# usage today, and the per-model breakdown (cache-hit rate, fallback rate, p95 latency)
+curl https://fastapi-docs-rag.fly.dev/usage/today     -H "X-API-Key: demo-pro"
+curl https://fastapi-docs-rag.fly.dev/usage/breakdown -H "X-API-Key: demo-pro"
+```
+
+Run the full acceptance check (every §1–§11 criterion) against the live service or a local one:
+
+```bash
+python scripts/acceptance.py                      # default: the deployed URL
+python scripts/acceptance.py --base http://localhost:8000 --ratelimit
+```
+
+Reproduce the deployment from scratch: [DEPLOY.md](DEPLOY.md).
+
+---
+
 ## Features
 
 | Capability | What it does |
@@ -95,8 +127,9 @@ All settings live in `app/config.py` and are read from `.env`. Key variables:
 ```
 OPENAI_API_KEY        # embeddings
 OPENROUTER_API_KEY    # LLM (chat)
-QDRANT_URL            # default http://localhost:6333
-REDIS_URL             # default redis://localhost:6379/0
+QDRANT_URL            # default http://localhost:6333 (https URL for Qdrant Cloud)
+QDRANT_API_KEY        # empty for a local container; required for Qdrant Cloud
+REDIS_URL             # default redis://localhost:6379/0 (rediss:// for Upstash)
 LANGFUSE_PUBLIC_KEY   # optional — enables tracing when both keys are set
 LANGFUSE_SECRET_KEY
 ```
@@ -109,15 +142,20 @@ MRR@10, and latency percentiles (see [eval/results/benchmark_results.md](eval/re
 Takeaway for this corpus size: **dense retrieval is the sweet spot**; the reranker improves Recall@1
 by a few points but adds ~2.7s of latency, so it ships behind the `rerank_enabled` flag (off by default).
 
+The benchmark and reranker need extra (torch-based) deps that the API itself does not — install them
+only for eval: `pip install -r requirements-eval.txt`. The production image stays torch-free.
+
 ## Project structure
 
 ```
 app/         FastAPI application (config, auth, rag, llm, cache, cost, ratelimit,
              security, observability, indexer, main)
-scripts/     One-off utilities and smoke tests (fetch_docs, index, ask, test_*)
+scripts/     Utilities + smoke tests (fetch_docs, index, test_*) and acceptance.py
 eval/        Retrieval datasets and benchmark harness
 data/docs/   The corpus (FastAPI tutorial docs)
-docker-compose.yml   Qdrant + Redis
+docker-compose.yml         Qdrant + Redis for local development
+Dockerfile / .dockerignore Torch-free multi-stage image (~428MB) for deployment
+fly.toml / DEPLOY.md       Fly.io deployment config and runbook
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full file-by-file map and the rationale behind each

@@ -149,11 +149,12 @@ only for eval: `pip install -r requirements-eval.txt`. The production image stay
 
 Beyond retrieval quality, [`eval/safety/`](eval/safety/) is a full **safety eval pipeline** that drives the
 live bot over its HTTP API and scores four production risk classes — **PII leakage, prompt injection,
-hallucinations/faithfulness, refusal patterns** — against gates fixed up front, using Microsoft Presidio
-and an independent LLM-as-judge. The headline result: the default config is **NOT ship-ready** (indirect
-prompt injection + planted-PII both leak via poisoned retrieved content), and a small retrieved-content
-guardrail ([`app/guardrails.py`](app/guardrails.py), `guardrails_enabled`) takes both to **0%** with no
-quality regression. Full numbers and the **ship / not-ship verdict** are in **[REPORT.md](REPORT.md)**.
+hallucinations/faithfulness, refusal patterns** — against gates fixed up front, using Microsoft Presidio,
+**RAGAS** (faithfulness/relevancy), and an independent 3-vote LLM-as-judge ensemble. The headline result:
+the default config is **NOT ship-ready** (indirect prompt injection + planted-PII both leak via poisoned
+retrieved content), and a small retrieved-content guardrail ([`app/guardrails.py`](app/guardrails.py),
+`guardrails_enabled`) takes both to **0%** while holding faithfulness above its gate. Full numbers and the
+**ship / not-ship verdict** are in **[REPORT.md](REPORT.md)**.
 
 ## Project structure
 

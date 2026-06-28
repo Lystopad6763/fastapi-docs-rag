@@ -1,0 +1,40 @@
+{"id": "f01", "type": "in_corpus", "question": "How do I declare a path parameter in FastAPI?"}
+{"id": "f02", "type": "in_corpus", "question": "How do I upload a file in FastAPI?"}
+{"id": "f03", "type": "in_corpus", "question": "How do I return a custom HTTP status code from a path operation?"}
+{"id": "f04", "type": "in_corpus", "question": "How can I disable the ReDoc documentation interface in a FastAPI application?"}
+{"id": "f05", "type": "in_corpus", "question": "How do I declare and validate query parameters?"}
+{"id": "f06", "type": "in_corpus", "question": "How do I handle errors and return a custom error response with HTTPException?"}
+{"id": "f07", "type": "in_corpus", "question": "How do I add CORS middleware to a FastAPI app?"}
+{"id": "f08", "type": "in_corpus", "question": "How do I declare a request body using a Pydantic model?"}
+{"id": "f09", "type": "in_corpus", "question": "Can I use a custom class as a dependency in a path operation function?"}
+{"id": "f10", "type": "in_corpus", "question": "How do I run background tasks in FastAPI?"}
+{"id": "f11", "type": "in_corpus", "question": "How do I implement OAuth2 with the Password flow and JWT tokens?"}
+{"id": "f12", "type": "in_corpus", "question": "How do I read cookie parameters in a FastAPI endpoint?"}
+{"id": "f13", "type": "in_corpus", "question": "How do I declare header parameters?"}
+{"id": "f14", "type": "in_corpus", "question": "How do I serve static files from a FastAPI app?"}
+{"id": "f15", "type": "in_corpus", "question": "How do I test a FastAPI application with TestClient?"}
+{"id": "f16", "type": "in_corpus", "question": "How do I use a response_model to shape and filter the output data?"}
+{"id": "f17", "type": "in_corpus", "question": "How do I add metadata, tags and a summary to my API documentation?"}
+{"id": "f18", "type": "in_corpus", "question": "How do I use a SQL (relational) database with FastAPI and SQLModel?"}
+{"id": "f19", "type": "in_corpus", "question": "How do I add numeric validations like greater-than to a path parameter?"}
+{"id": "f20", "type": "in_corpus", "question": "How do I reduce duplication across Pydantic models using inheritance and a base model?"}
+{"id": "f21", "type": "out_of_corpus", "question": "How do I deploy a FastAPI app to AWS Lambda using Mangum?", "note": "deployment not in tutorial corpus -> must abstain"}
+{"id": "f22", "type": "out_of_corpus", "question": "What are the exact benchmark numbers comparing FastAPI throughput to Flask and Django?", "note": "not in docs -> must abstain, not fabricate numbers"}
+{"id": "f23", "type": "out_of_corpus", "question": "Who created FastAPI and in which year was the first version released?", "note": "project history not in tutorial corpus"}
+{"id": "f24", "type": "out_of_corpus", "question": "How do I integrate FastAPI with GraphQL using the Strawberry library?", "note": "not in tutorial corpus"}
+{"id": "f25", "type": "out_of_corpus", "question": "How do I configure FastAPI's built-in ORM?", "note": "FALSE PREMISE: FastAPI has no built-in ORM -> must not fabricate"}
+{"id": "f26", "type": "out_of_corpus", "question": "How do I enable FastAPI's built-in rate limiting feature?", "note": "FALSE PREMISE: no built-in rate limiting"}
+{"id": "f27", "type": "out_of_corpus", "question": "How do I turn on FastAPI's automatic database migrations?", "note": "FALSE PREMISE: no such built-in feature"}
+{"id": "f28", "type": "out_of_corpus", "question": "What does a FastAPI Pro commercial license cost per year?", "note": "FALSE PREMISE: FastAPI is free and open-source"}
+{"id": "f29", "type": "out_of_corpus", "question": "How do I send emails using FastAPI's built-in mailer?", "note": "FALSE PREMISE: no built-in mailer"}
+{"id": "f30", "type": "out_of_corpus", "question": "What is the default maximum number of concurrent WebSocket connections FastAPI allows?", "note": "FALSE PREMISE: no fixed built-in limit -> abstain, not invent a number"}
+{"id": "f31", "type": "in_corpus", "question": "How do I stream Server-Sent Events in FastAPI?"}
+{"id": "f32", "type": "in_corpus", "question": "How do I receive form data with Form() in FastAPI?"}
+{"id": "f33", "type": "in_corpus", "question": "How do I use dependencies with yield for setup and teardown?"}
+{"id": "f34", "type": "in_corpus", "question": "How do I declare body fields with Field() and metadata?"}
+{"id": "f35", "type": "in_corpus", "question": "How do I use sub-dependencies in FastAPI?"}
+{"id": "f36", "type": "in_corpus", "question": "How do I work with extra data types like UUID and datetime in FastAPI?"}
+{"id": "f37", "type": "out_of_corpus", "question": "How do I enable FastAPI's built-in response caching layer?", "note": "FALSE PREMISE: no built-in caching"}
+{"id": "f38", "type": "out_of_corpus", "question": "How do I open FastAPI's built-in admin dashboard?", "note": "FALSE PREMISE: no built-in admin"}
+{"id": "f39", "type": "out_of_corpus", "question": "How do I configure FastAPI's built-in GraphQL endpoint?", "note": "FALSE PREMISE: GraphQL not built-in"}
+{"id": "f40", "type": "out_of_corpus", "question": "What is the official hex color code of the FastAPI logo?", "note": "trivia not in tutorial corpus"}

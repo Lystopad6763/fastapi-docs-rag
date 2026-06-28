@@ -51,11 +51,20 @@ def retrieve(query: str, top_k: int | None = None):
 
 
 def build_context(hits) -> tuple[str, list[str]]:
-    """Format retrieved chunks into a context block + list of source ids."""
+    """Format retrieved chunks into a context block + list of source ids.
+
+    When settings.guardrails_enabled, each chunk is sanitized BEFORE the LLM
+    sees it: injected imperative instructions are stripped and PII is masked. This closes
+    the two gaps the safety eval found (indirect injection + planted-PII leak) at the source.
+    """
     blocks, sources = [], []
     for h in hits:
         cid = h.payload.get("chunk_id", str(h.id))
-        blocks.append(f"[{cid}]\n{h.payload.get('text', '')}")
+        text = h.payload.get("text", "")
+        if settings.guardrails_enabled:
+            from app.guardrails import sanitize_context
+            text = sanitize_context(text)
+        blocks.append(f"[{cid}]\n{text}")
         sources.append(cid)
     return "\n\n---\n\n".join(blocks), sources
 

@@ -1,0 +1,100 @@
+{
+  "summary": {
+    "n": 12,
+    "latency_ms": {
+      "p50": 5272.1,
+      "p95": 7035.4,
+      "mean": 4859.1
+    },
+    "cost_usd": {
+      "total": 0.00245,
+      "avg_per_request": 0.000204
+    }
+  },
+  "results": [
+    {
+      "q": "How do I declare a path parameter in FastAPI?",
+      "latency_ms": 673.2,
+      "cost_usd": 0.0,
+      "cache_hit": false,
+      "out_tokens": null
+    },
+    {
+      "q": "How do I upload a file?",
+      "latency_ms": 5272.1,
+      "cost_usd": 0.000198,
+      "cache_hit": false,
+      "out_tokens": 183
+    },
+    {
+      "q": "How do I add CORS middleware?",
+      "latency_ms": 4015.1,
+      "cost_usd": 0.000179,
+      "cache_hit": false,
+      "out_tokens": 178
+    },
+    {
+      "q": "How do I handle errors with HTTPException?",
+      "latency_ms": 6005.6,
+      "cost_usd": 0.000226,
+      "cache_hit": false,
+      "out_tokens": 233
+    },
+    {
+      "q": "How do I declare query parameters?",
+      "latency_ms": 5580.9,
+      "cost_usd": 0.00024,
+      "cache_hit": false,
+      "out_tokens": 266
+    },
+    {
+      "q": "How do I use a response_model?",
+      "latency_ms": 7076.4,
+      "cost_usd": 0.000332,
+      "cache_hit": false,
+      "out_tokens": 310
+    },
+    {
+      "q": "How do I run background tasks?",
+      "latency_ms": 5788.8,
+      "cost_usd": 0.000207,
+      "cache_hit": false,
+      "out_tokens": 200
+    },
+    {
+      "q": "How do I read cookie parameters?",
+      "latency_ms": 4557.9,
+      "cost_usd": 0.000218,
+      "cache_hit": false,
+      "out_tokens": 172
+    },
+    {
+      "q": "How do I implement OAuth2 with JWT?",
+      "latency_ms": 7035.4,
+      "cost_usd": 0.000265,
+      "cache_hit": false,
+      "out_tokens": 253
+    },
+    {
+      "q": "How do I serve static files?",
+      "latency_ms": 4080.7,
+      "cost_usd": 0.0002,
+      "cache_hit": false,
+      "out_tokens": 202
+    },
+    {
+      "q": "How do I test a FastAPI app?",
+      "latency_ms": 4218.9,
+      "cost_usd": 0.000154,
+      "cache_hit": false,
+      "out_tokens": 134
+    },
+    {
+      "q": "How do I add numeric validation to a path parameter?",
+      "latency_ms": 4004.3,
+      "cost_usd": 0.000231,
+      "cache_hit": false,
+      "out_tokens": 196
+    }
+  ]
+}

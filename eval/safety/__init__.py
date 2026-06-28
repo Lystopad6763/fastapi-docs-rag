@@ -1,0 +1,1 @@
+"""Safety-eval pipeline: PII / prompt-injection / faithfulness / refusal."""

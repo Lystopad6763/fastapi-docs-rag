@@ -1,0 +1,26 @@
+# Safety-eval dependencies. Install into the project's .venv:
+#   pip install -r eval/safety/requirements-safety.txt
+#   python -m spacy download en_core_web_lg     # Presidio's NER model (PII class)
+#
+# NOT needed to run the API itself — only the safety pipeline under eval/safety/.
+# The harness (harness.py) needs none of these (only httpx + qdrant-client, already
+# in the base requirements), so it can be smoke-tested before installing this set.
+
+-r ../../requirements.txt
+
+# Faithfulness / answer-relevancy for RAG.
+# NOTE: in this environment ragas hit a langchain_community import conflict, so the
+# faithfulness evaluator implements the RAGAS *definition* directly (claim-extraction ->
+# per-claim NLI vs. retrieved context) via the LLM-as-judge and needs NO extra deps.
+# Left here as optional/documentation — uncomment to try the library:
+# ragas>=0.2.0
+
+# PII detection + masking
+presidio-analyzer>=2.2.0
+presidio-anonymizer>=2.2.0
+
+# Threshold config
+pyyaml>=6.0
+
+# CI gate (test_safety_gates.py)
+pytest>=8.0

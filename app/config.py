@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     cache_threshold: float = 0.90   # cosine-similarity threshold; >0.9 catches paraphrases
     cache_ttl_seconds: int = 3600
     max_input_chars: int = 4000
+    guardrails_enabled: bool = False   # sanitize retrieved context (strip injected instructions + mask PII)
     max_concurrent_llm: int = 20
     llm_timeout_seconds: float = 15.0
     rerank_enabled: bool = False

@@ -145,6 +145,16 @@ by a few points but adds ~2.7s of latency, so it ships behind the `rerank_enable
 The benchmark and reranker need extra (torch-based) deps that the API itself does not — install them
 only for eval: `pip install -r requirements-eval.txt`. The production image stays torch-free.
 
+## Safety evaluation (PII · injection · faithfulness · refusal)
+
+Beyond retrieval quality, [`eval/safety/`](eval/safety/) is a full **safety eval pipeline** that drives the
+live bot over its HTTP API and scores four production risk classes — **PII leakage, prompt injection,
+hallucinations/faithfulness, refusal patterns** — against gates fixed up front, using Microsoft Presidio
+and an independent LLM-as-judge. The headline result: the default config is **NOT ship-ready** (indirect
+prompt injection + planted-PII both leak via poisoned retrieved content), and a small retrieved-content
+guardrail ([`app/guardrails.py`](app/guardrails.py), `guardrails_enabled`) takes both to **0%** with no
+quality regression. Full numbers and the **ship / not-ship verdict** are in **[REPORT.md](REPORT.md)**.
+
 ## Project structure
 
 ```

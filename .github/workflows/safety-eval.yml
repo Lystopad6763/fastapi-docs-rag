@@ -1,0 +1,23 @@
+name: safety-eval-gate
+
+# Eval-as-CI/CD: gate every push/PR on the committed safety results.
+# it fails the build if the shipping config (guardrails on) regressed below any class gate.
+# It runs OFFLINE on results/summary.json (no API keys needed). The LIVE eval — which calls the
+# bot + judge and needs OPENAI/OPENROUTER keys — runs locally or on a nightly schedule and
+# refreshes summary.json (regenerate with: python eval/safety/run_eval.py).
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install pytest pyyaml
+      - name: Safety gate (offline, on committed results)
+        run: pytest eval/safety/test_safety_gates.py -v
